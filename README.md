@@ -1,225 +1,171 @@
-# Spot Market
+# 📍 SpotMarket — Plataforma de Precios y Comercios Locales (Formosa Capital)
 
-Marketplace local para conectar comercios de barrio (almacenes, kioscos, verdulerías, carnicerías, distribuidoras y más) con vecinos, restaurantes y otros comercios.
+Plataforma web de software para la **centralización, consulta y comparación transparente de precios** entre minimercados, almacenes y comercios de barrio en **Formosa Capital**.
 
-El catálogo se puede explorar sin cuenta. Para ver locales cercanos, filtrar u ordenar por precio, calificar comercios/productos, hacer pedidos y negociar por chat se requiere registro.
+> **"Informate de los mejores precios de tu zona desde la comodidad de tu hogar."**
 
-## Características
+---
 
-- Catálogo público de comercios y productos con búsqueda, filtros y orden.
-- Gating real desde el backend:
-  - filtros/orden por precio requieren sesión (`401 REGISTRO_REQUERIDO`);
-  - locales cercanos requieren sesión (`401`);
-  - calificar, pedir, chatear y editar perfiles requiere sesión (`401/403`).
-- Geolocalización de comercios y listado “Cerca de mí” por radio (Haversine).
-- Registro de usuarios (vecino, comercio, restaurante, mayorista) y de comerciantes con:
-  - nombre del local, responsable, teléfono, email, ubicación y coordenadas;
-  - categoría `minorista`, `mayorista` o `ambos`;
-  - tipos de productos que ofrece;
-  - fotos del local y descripción.
-- Publicación/edición/eliminación de productos con precio, precio de oferta, especificación, descripción, stock e imagen.
-- Calificación de comercios y productos de 1 a 5 estrellas con comentario (una reseña por usuario y destino; se actualiza, no se duplica).
-- Pedidos con estados `pendiente → confirmado → entregado`; la confirmación exige que el precio negociado coincida con una oferta enviada en el chat.
-- Chat de negociación entre usuario y comercio.
-- Imágenes subidas al backend (JPG, PNG, WEBP, GIF · máx. 5 MB) servidas desde `/uploads`.
-- Interfaz responsive en HTML/CSS/JS vanilla + Bootstrap 5.
+## 🎯 Propósito del Proyecto y Problemática Resuelta
 
-## Stack
+En Formosa Capital, la información sobre precios en góndola se encuentra altamente descentralizada y dispersa en los diferentes barrios urbanos. Estudios de mercado confirman que un mismo producto de la canasta básica familiar puede costar hasta un **9,2% más** según el negocio elegido, llegando a brechas del **20% al 50%** de ahorro potencial si se cuenta con información precisa en tiempo real.
 
-- Backend: Node.js, Express, Sequelize, JWT, bcryptjs, multer.
-- Base de datos: SQLite por defecto (cero configuración) o MySQL opcional.
-- Frontend: HTML, CSS, JavaScript ES Modules y Bootstrap 5.3 vía CDN. El backend sirve el frontend, así que toda la aplicación funciona en un solo puerto. También incluye un servidor de desarrollo opcional con proxy.
+### Actores Beneficiados
+1. **Consumidores y Familias:** Comparan precios reales de proximidad antes de salir a comprar, protegiendo sus ingresos diarios contra la inflación.
+2. **Estudiantes del Interior:** Jóvenes que llegan a estudiar a la capital sin conocer los comercios ni las referencias de precios de cada barrio.
+3. **Pequeños y Medianos Comerciantes:** Minimercados y negocios barriales independientes que obtienen una vidriera digital gratuita y geolocalizada para competir con visibilidad frente a las grandes cadenas.
 
-## Puesta en marcha
+> **Importante:** SpotMarket **no es un e-commerce transaccional**. No se realizan compras directas, pedidos ni pagos en la aplicación, ni se gestiona stock ni regateo de precios. La plataforma conecta informativamente a vecinos con comerciantes a través de sus canales de contacto directo (WhatsApp, teléfono y ubicación física).
 
-Requisitos: Node.js 18 o superior y npm.
+---
 
-Desde la raíz del proyecto:
+## 🚀 Características Principales
 
-```bash
-npm run install:all   # instala dependencias del backend
-npm run seed          # crea la base y carga datos demo
-npm start
-```
+- **Catálogo de Precios Transparente:** Búsqueda en tiempo real por nombre, rubro, categorías y ordenamiento de precios.
+- **Productos Más Solicitados y Vendidos:** Sección destacada en la portada principal para identificar rápidamente los productos líderes de la canasta barrial.
+- **Ofertas de la Semana:** Descuentos temporales publicados por comercios con cálculo de porcentaje de ahorro y distancia.
+- **Financiación en Cuotas:** Visibilidad de facilidades de pago (ej. 3, 6 y 12 cuotas fijas).
+- **Mapa Interactivo de Formosa Capital:** Visualización con OpenStreetMap/Leaflet y cálculo de distancia en línea recta mediante la fórmula de **Haversine** (`lat/lng`).
+- **Comunidad y Valoraciones:** Los usuarios registrados pueden calificar con estrellas y comentar **únicamente sobre los productos** (se excluye la calificación entre negocios para garantizar un entorno leal y constructivo).
+- **Panel Exclusivo del Comerciante:**
+  - Registro ágil en 3 pasos: datos del local, ubicación en el mapa y fotografías.
+  - Publicación y edición inmediata de productos con soporte para fotos (Cloudinary) y precios.
+  - Gestión de ofertas y promociones con fecha límite.
+  - Actualización de canales de atención (WhatsApp, teléfono y dirección).
 
-Abrí `http://localhost:4000`.
+---
 
-El backend sirve tanto la aplicación web como la API:
+## 🛠️ Stack Tecnológico
 
-- App: `http://localhost:4000`
-- API: `http://localhost:4000/api/v1`
-- Salud: `http://localhost:4000/api/v1/salud`
-- Imágenes: `http://localhost:4000/uploads/...`
+El proyecto está construido íntegramente siguiendo los lineamientos curriculares y pedagógicos de la carrera de Desarrollo de Software (Instituto Politécnico Formosa):
 
-El archivo `.env` es opcional; los valores por defecto ya funcionan con SQLite. Si necesitás cambiarlos, copiá `backend/.env.example` a `backend/.env`.
+### Frontend
+- **React (v18+)** con **Vite** como empaquetador ultrarrápido con HMR.
+- **Tailwind CSS** para un diseño moderno, responsivo y de alto contraste oscuro (`#070C16`, `#111A2E`, `#FFB800`, `#EF4444`).
+- **React Router** para navegación declarativa mediante SPA (Single Page Application).
+- **Custom Hooks:** `useFetch` (para consumo de API con manejo de carga/error) y `useForm` (para formularios controlados con setter funcional).
+- **Leaflet & React-Leaflet** para mapas geolocalizados.
+- **Autenticación:** Manejo de estado de sesión basado en `isLogged` en `localStorage` y cookies seguras.
 
-### Frontend en modo desarrollo (opcional)
+### Backend
+- **Node.js** con entorno **Express** estructurado en arquitectura en capas (config, models, controllers, routes, middlewares, utils/helpers).
+- **ESModules (`import` / `export`)** nativo.
+- **Sequelize ORM** con soporte dual:
+  - **MySQL / MariaDB** (motor relacional principal para cursada y producción).
+  - **SQLite** (motor ligero con archivo local para ejecución y testing sin configuración).
+- **Seguridad y Autenticación:**
+  - Contraseñas hasheadas irreversiblemente con **bcryptjs** (costo `saltRounds: 10`).
+  - Autenticación con **JWT (JSON Web Token)** transmitido mediante cookies seguras **`httpOnly`** (protección contra ataques XSS) y `credentials: 'include'`.
+- **Validaciones:** Validación robusta en todas las rutas con **express-validator**.
+- **Gestión Multimedia:** Subida de imágenes procesada en memoria mediante **Multer** y almacenada en la nube con **Cloudinary** (`upload_stream`), persistiendo en la base de datos únicamente `url` y `public_id`.
 
-Si querés usar el servidor de desarrollo del frontend con recarga manual y proxy:
+---
 
-```bash
-# terminal 1, desde la raíz
-npm start
-
-# terminal 2
-cd frontend
-npm start
-```
-
-En ese caso abrí `http://localhost:5175`. El servidor de frontend hace proxy de `/api/*` y `/uploads/*` hacia `http://localhost:4000`.
-
-### Abrir y ejecutar desde VS Code
-
-El proyecto está preparado para VS Code:
-
-1. Abrí la carpeta completa del proyecto (`spot-market`), no solo un archivo ni la carpeta personal.
-2. La primera vez, ejecutá las tareas `1. Instalar dependencias` y `2. Cargar datos demo` desde `Terminal → Run Task`.
-3. Presioná `F5` y elegí `Spot Market (servidor + frontend)`.
-4. Abrí `http://localhost:4000`.
-
-La configuración está en `.vscode/launch.json`, `.vscode/tasks.json` y `.vscode/settings.json`. Si aparece `EADDRINUSE`, ya hay otro servidor usando el puerto 4000: cerralo o detené la terminal anterior antes de presionar `F5`.
-
-## Credenciales demo
-
-Contraseña para todas las cuentas: `123456`.
-
-| Rol | Email | Nombre |
-| --- | --- | --- |
-| Comercio | `juan@spotmarket.com` | Almacén Don Juan (minorista) |
-| Comercio | `maria@spotmarket.com` | Distribuidora María (mayorista) |
-| Comercio | `pedro@spotmarket.com` | Kiosco El Sol (minorista) |
-| Comercio | `carla@spotmarket.com` | Panadería La Espiga (minorista) |
-| Usuario | `vecino@spotmarket.com` | Sofía Ramírez |
-| Usuario | `resto@spotmarket.com` | Restaurante Sabores |
-
-## Reglas de acceso
-
-| Acción | Sin cuenta | Con cuenta |
-| --- | --- | --- |
-| Explorar comercios y productos | Sí | Sí |
-| Filtrar u ordenar por precio | No | Sí |
-| Ver locales cercanos | No | Sí |
-| Calificar comercio/producto | No | Sí (no el propio) |
-| Hacer pedidos | No | Solo usuarios |
-| Confirmar pedido | No | Solo el comercio dueño |
-| Marcar entregado | No | Solo el usuario comprador |
-| Chatear/negociar | No | Solo participantes |
-| Publicar/editar productos | No | Solo el comercio dueño |
-| Editar perfil | No | Solo el propio |
-
-## Flujo rápido
-
-### Como comerciante
-
-1. Crear cuenta con “Soy comerciante”, completar datos del local, tipos de productos, ubicación (botón “Usar mi ubicación”) y fotos.
-2. Desde “Productos”, usar “Publicar producto” y cargar nombre, tipo, descripción, especificación, precio, oferta, stock e imagen.
-3. Recibir consultas en “Chats” y pedidos en “Pedidos”.
-4. Confirmar un pedido pendiente. Solo se confirma si el precio negociado coincide con una oferta enviada en el chat.
-5. Editar el perfil en “Comercios → Mi perfil”.
-
-### Como usuario
-
-1. Crear cuenta como usuario o explorar el catálogo sin registrarse.
-2. Registrarse para usar “Cerca de mí”, filtros por precio y calificaciones.
-3. Pedir un producto desde “Productos” o negociar en “Chats”.
-4. Marcar como entregado un pedido confirmado por el comercio.
-5. Calificar comercios y productos desde “Comercios” y “Productos”.
-
-## API principal
-
-Base: `http://localhost:4000/api/v1`
-
-| Método | Ruta | Acceso |
-| --- | --- | --- |
-| GET | `/salud` | Público |
-| POST | `/auth/productores/registro` (`/auth/comercios/registro`) | Público |
-| POST | `/compradores/registro` | Público |
-| POST | `/auth/login` | Público |
-| GET | `/productores` | Público |
-| GET | `/productores/cercanos?lat=&lng=&radio=` | Autenticado |
-| GET | `/productores/:id` | Público |
-| PATCH/DELETE | `/productores/:id` | Dueño |
-| GET | `/productores/:id/calificaciones` | Público |
-| POST | `/productores/:id/calificaciones` | Autenticado |
-| GET | `/productores/:id/estadisticas` | Dueño |
-| GET | `/productos` | Público; precio/orden por precio requieren sesión |
-| GET | `/productos/:id` | Público |
-| POST/PATCH/DELETE | `/productos` · `/productos/:id` | Comercio dueño |
-| GET | `/productos/:id/calificaciones` | Público |
-| POST | `/productos/:id/calificaciones` | Autenticado |
-| GET | `/compradores` | Autenticado |
-| PATCH | `/compradores/:id` | Dueño |
-| GET | `/compradores/:id/productores` | Dueño |
-| GET | `/transacciones` | Autenticado (solo propias) |
-| POST | `/transacciones` | Usuario autenticado |
-| PATCH | `/transacciones/:id/estado` | Participante según estado |
-| GET | `/chats` | Autenticado (solo propios) |
-| GET/POST | `/chats/productor/:productor_id/comprador/:comprador_id` | Participantes |
-| POST | `/uploads` | Autenticado (`archivo` o `archivos`) |
-
-Las respuestas exitosas siguen el formato `{ ok, message, data?, ... }`. Los errores de validación devuelven `400` con `errors`.
-
-## Configuración
-
-Variables en `backend/.env` (ver `backend/.env.example`):
-
-| Variable | Default | Descripción |
-| --- | --- | --- |
-| `DB_DIALECT` | `sqlite` | `sqlite` o `mysql` |
-| `DB_STORAGE` | `backend/data/spotmarket.sqlite` | Archivo SQLite (las rutas relativas se resuelven desde `backend/`) |
-| `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_HOST`, `DB_PORT` | — | Conexión MySQL |
-| `PORT` | `4000` | Puerto del servidor |
-| `JWT_SECRET` | `secreto_dev` | Cambiar en producción |
-| `UPLOAD_DIR` | `backend/uploads` | Carpeta de imágenes |
-| `FRONTEND_DIR` | `frontend/` | Carpeta del frontend servida por Express |
-| `NODE_ENV` | `development` | Entorno |
-
-Para usar MySQL:
-
-```env
-DB_DIALECT=mysql
-DB_NAME=spot_market
-DB_USER=root
-DB_PASS=tu_password
-DB_HOST=127.0.0.1
-DB_PORT=3306
-```
-
-Luego ejecutá `npm run seed` para crear las tablas y cargar los datos demo.
-
-## Pruebas
-
-```bash
-npm test
-```
-
-Las pruebas levantan la app en el puerto `4100`, usan una base SQLite aislada (`backend/data/test-spotmarket.sqlite`) y una carpeta de uploads temporal, y al finalizar eliminan esos archivos. Cubren registro/login, gating por precio, locales cercanos, permisos, calificaciones, pedidos, chat, privacidad, subida de imágenes y borrado lógico.
-
-## Estructura
+## 📂 Estructura del Repositorio
 
 ```text
-package.json         scripts para iniciar, sembrar y probar desde la raíz
-backend/
-  app.js, server.js
-  src/
-    config/        conexión, entorno y catálogos
-    models/        Productor, Comprador, Producto, Calificacion, Chat, Transaccion
-    controllers/   lógica de la API
-    routes/        endpoints
-    middlewares/   auth, uploads, validación y errores
-    validators/    reglas de entrada
-    utils/         geolocalización y resúmenes de calificaciones
-    seed.js        datos demo
-  tests/api.test.js
-frontend/
-  *.html
-  assets/css/estilos.css
-  assets/js/app.js y módulos por página
-  servidor.js      servidor estático + proxy
+spot-market/
+├── backend/
+│   ├── server.js                     # Punto de entrada del servidor Express
+│   ├── app.js                        # Configuración de Express, CORS y Middlewares
+│   ├── package.json
+│   ├── .env.example                  # Variables de entorno modelo
+│   └── src/
+│       ├── config/                   # Conexión Sequelize (db.js) y Cloudinary
+│       ├── models/                   # Modelos: Usuario, Comercio, FotoComercio, Producto, Oferta, Valoracion, Favorito
+│       ├── controllers/              # Controladores de lógica de negocio (CRUDs)
+│       ├── routes/                   # Definición de endpoints (/api)
+│       ├── middlewares/              # Autenticación (verificarToken), Multer, Validaciones y Manejo de Errores
+│       ├── utils/                    # Fórmula de Haversine, subida Cloudinary, cookies
+│       ├── validators/               # Reglas de express-validator
+│       └── seed.js                   # Carga inicial de datos reales de Formosa
+│
+├── frontend/
+│   ├── index.html
+│   ├── vite.config.js                # Proxy hacia el backend (:4000)
+│   ├── tailwind.config.js
+│   ├── package.json
+│   └── src/
+│       ├── assets/                   # Logotipos oficiales SVG
+│       ├── components/               # Navbar, Footer y componentes modulares
+│       ├── hooks/                    # useFetch y useForm (según pautas de cátedra)
+│       ├── pages/                    # Inicio, Productos, DetalleProducto, Ofertas, MapaPage, Login, Register, Panel
+│       ├── services/                 # api.js con fetch nativo y credentials: 'include'
+│       ├── index.css                 # Directivas Tailwind y estilos de alto contraste
+│       ├── App.jsx                   # Enrutamiento principal
+│       └── main.jsx                  # Montaje con createRoot y StrictMode
+│
+└── README.md
 ```
 
-## Notas
+---
 
-- El proyecto usa soft delete en comercios, productos, usuarios, transacciones y chats.
-- Las fotos demo del seed son URLs externas de `picsum.photos`.
-- En producción, cambiá `JWT_SECRET`, usá HTTPS y serví el frontend compilado/estático detrás de un proxy.
+## ⚡ Guía de Instalación y Puesta en Marcha
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/fabiannacevvedo-crypto/Spot-Market.git
+cd Spot-Market
+```
+
+### 2. Configurar el Backend
+```bash
+cd backend
+npm install
+cp .env.example .env
+```
+
+*Configuración en `.env`:*
+```env
+DB_DIALECT=sqlite              # O 'mysql' si tenés MySQL/XAMPP corriendo
+DB_NAME=spotmarket
+DB_USER=root
+DB_PASS=
+DB_HOST=127.0.0.1
+DB_PORT=3306
+PORT=4000
+JWT_SECRET=secreto_desarrollo_spotmarket_2026
+CORS_ORIGIN=http://localhost:5173
+```
+
+### 3. Cargar Datos de Demostración (Seed)
+Puebla automáticamente 7 comercios barriales de Formosa (Almacén Don Pepe, Súper Sol APA, Frutería La Esquina, Deportes Norte, TechZone, etc.) y más de 15 productos:
+```bash
+npm run seed
+```
+
+### 4. Iniciar el Backend
+```bash
+npm start
+# La API queda escuchando en http://localhost:4000/api
+```
+
+### 5. Iniciar el Frontend (React)
+En una nueva terminal:
+```bash
+cd frontend
+npm install
+npm run dev
+# La aplicación abrirá en http://localhost:5173
+```
+
+---
+
+## 🔐 Cuentas de Prueba Pre-cargadas
+
+| Rol | Correo Electrónico | Contraseña | Acceso |
+| :--- | :--- | :--- | :--- |
+| **Comerciante (Almacén Don Pepe)** | `comercio1@spotmarket.com` | `123456` | Panel de Comercio completo |
+| **Comerciante (Súper Sol APA)** | `comercio2@spotmarket.com` | `123456` | Panel de Comercio completo |
+| **Comerciante (Deportes Norte)** | `comercio4@spotmarket.com` | `123456` | Panel de Comercio completo |
+| **Consumidor / Vecino** | `consumidor@spotmarket.com` | `123456` | Guardar favoritos y valorar productos |
+
+---
+
+## 👥 Equipo de Desarrollo y Presentación
+- **Aguirre, Ana Belén**
+- **Bogado, Daiana**
+- **Duarte, Serena**
+- **Schibilbain, Valentina**
+
+*Desarrollado en el marco del Instituto Politécnico Formosa — 2026.*
