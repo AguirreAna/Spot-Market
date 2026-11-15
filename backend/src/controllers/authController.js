@@ -1,133 +1,112 @@
+// Controlador de autenticación de SpotMarket.
+// Maneja registro (usuario/comerciante), login, logout y sesión actual.
+// El JWT se guarda en una cookie httpOnly (no en el body) para reducir exposición a XSS.
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { matchedData } from 'express-validator';
-import { Productor } from '../models/Productor.js';
-import { Comprador } from '../models/Comprador.js';
+import { db } from '../models/index.js';
 import { env } from '../config/env.js';
+import { cookieJwtOpciones, NOMBRE_COOKIE_JWT } from '../utils/cookie.js';
+import { subirABufferCloudinary } from '../utils/cloudinaryUpload.js';
 
-const generarToken = (usuario, rol) => {
-  return jwt.sign(
-    { id: usuario.id, rol, email: usuario.email },
-    env.JWT_SECRET,
-    { expiresIn: '8h' }
-  );
-};
+const { Usuario, Comercio, FotoComercio } = db;
 
-export const normalizarLista = (valor) => {
-  if (Array.isArray(valor)) {
-    return [...new Set(valor.map((v) => String(v).trim()).filter(Boolean))];
-  }
-  return [...new Set(String(valor || '').split(',').map((v) => v.trim()).filter(Boolean))];
-};
+const generarToken = (usuario) =>
+  jwt.sign({ id: usuario.id, rol: usuario.rol, email: usuario.email }, env.JWT_SECRET, {
+    expiresIn: '8h'
+  });
 
-export const serializarProductor = (productor) => ({
-  id: productor.id,
-  nombre: productor.nombre,
-  nombre_local: productor.nombre_local,
-  email: productor.email,
-  telefono: productor.telefono,
-  ubicacion: productor.ubicacion,
-  latitud: productor.latitud,
-  longitud: productor.longitud,
-  categoria: productor.categoria,
-  tipos_productos: productor.tipos_productos || [],
-  fotos: productor.fotos || [],
-  descripcion: productor.descripcion,
-  suscripcion: productor.suscripcion
+const datosUsuarioPublicos = (usuario) => ({
+  id: usuario.id,
+  nombre: usuario.nombre,
+  email: usuario.email,
+  rol: usuario.rol
 });
 
-export const serializarComprador = (comprador) => ({
-  id: comprador.id,
-  nombre: comprador.nombre,
-  email: comprador.email,
-  telefono: comprador.telefono,
-  tipo: comprador.tipo,
-  ubicacion: comprador.ubicacion
-});
-
-export const registrarProductor = async (req, res, next) => {
+export const registrar = async (req, res, next) => {
   try {
     const data = matchedData(req);
     const email = data.email.toLowerCase();
 
-    const [existeProductor, existeComprador] = await Promise.all([
-      Productor.findOne({ where: { email } }),
-      Comprador.findOne({ where: { email } })
-    ]);
-
-    if (existeProductor || existeComprador) {
-      return res.status(409).json({
-        ok: false,
-        message: 'El email ya se encuentra registrado.'
-      });
+    const existe = await Usuario.findOne({ where: { email } });
+    if (existe) {
+      return res.status(409).json({ ok: false, mensaje: 'El correo ya está registrado.' });
     }
 
     const hash = await bcrypt.hash(data.password, 10);
-    const productor = await Productor.create({
+    const usuario = await Usuario.create({
       nombre: data.nombre,
-      nombre_local: data.nombre_local,
       email,
-      telefono: data.telefono,
       password: hash,
-      ubicacion: data.ubicacion,
-      latitud: data.latitud || null,
-      longitud: data.longitud || null,
-      categoria: data.categoria,
-      tipos_productos: normalizarLista(data.tipos_productos),
-      fotos: normalizarLista(data.fotos),
-      descripcion: data.descripcion || null,
-      suscripcion: data.suscripcion || 'estandar'
+      rol: 'usuario'
     });
 
-    const token = generarToken(productor, 'productor');
+    const token = generarToken(usuario);
+    res.cookie(NOMBRE_COOKIE_JWT, token, cookieJwtOpciones());
 
     return res.status(201).json({
       ok: true,
-      message: 'Comercio registrado correctamente.',
-      token,
-      rol: 'productor',
-      usuario: serializarProductor(productor)
+      mensaje: 'Cuenta creada correctamente.',
+      usuario: datosUsuarioPublicos(usuario)
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const registrarComprador = async (req, res, next) => {
+export const registrarComercio = async (req, res, next) => {
   try {
     const data = matchedData(req);
     const email = data.email.toLowerCase();
 
-    const [existeComprador, existeProductor] = await Promise.all([
-      Comprador.findOne({ where: { email } }),
-      Productor.findOne({ where: { email } })
-    ]);
+    const existe = await Usuario.findOne({ where: { email } });
+    if (existe) {
+      return res.status(409).json({ ok: false, mensaje: 'El correo ya está registrado.' });
+    }
 
-    if (existeComprador || existeProductor) {
-      return res.status(409).json({
-        ok: false,
-        message: 'El email ya se encuentra registrado.'
+    // Hash de contraseña: nunca se guarda en texto plano.
+    const hash = await bcrypt.hash(data.password, 10);
+    const usuario = await Usuario.create({
+      nombre: data.nombre,
+      email,
+      password: hash,
+      rol: 'comerciante'
+    });
+
+    const tiposProductos = Array.isArray(data.tipos_productos)
+      ? data.tipos_productos.join(',')
+      : data.tipos_productos || null;
+
+    const comercio = await Comercio.create({
+      nombre_local: data.nombre_local,
+      tipo_comercio: data.tipo_comercio,
+      tipos_productos: tiposProductos,
+      telefono: data.telefono || null,
+      email,
+      direccion: data.direccion || null,
+      latitud: data.latitud || null,
+      longitud: data.longitud || null,
+      usuarioId: usuario.id
+    });
+
+    // Fotos opcionales: se suben a Cloudinary y se guarda solo url + public_id.
+    const archivos = req.files || [];
+    for (const archivo of archivos) {
+      const subida = await subirABufferCloudinary(archivo.buffer, 'spotmarket/comercios');
+      await FotoComercio.create({
+        url: subida.url,
+        public_id: subida.public_id,
+        comercioId: comercio.id
       });
     }
 
-    const hash = await bcrypt.hash(data.password, 10);
-    const comprador = await Comprador.create({
-      nombre: data.nombre,
-      email,
-      telefono: data.telefono || null,
-      password: hash,
-      tipo: data.tipo,
-      ubicacion: data.ubicacion
-    });
-
-    const token = generarToken(comprador, 'comprador');
+    const token = generarToken(usuario);
+    res.cookie(NOMBRE_COOKIE_JWT, token, cookieJwtOpciones());
 
     return res.status(201).json({
       ok: true,
-      message: 'Usuario registrado correctamente.',
-      token,
-      rol: 'comprador',
-      usuario: serializarComprador(comprador)
+      mensaje: 'Comercio registrado correctamente.',
+      usuario: { ...datosUsuarioPublicos(usuario), comercioId: comercio.id, nombre_local: comercio.nombre_local }
     });
   } catch (error) {
     next(error);
@@ -137,39 +116,51 @@ export const registrarComprador = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = matchedData(req);
-    const emailNormalizado = email.toLowerCase();
-
-    const [productor, comprador] = await Promise.all([
-      Productor.findOne({ where: { email: emailNormalizado } }),
-      Comprador.findOne({ where: { email: emailNormalizado } })
-    ]);
-
-    if (productor && (await bcrypt.compare(password, productor.password))) {
-      const token = generarToken(productor, 'productor');
-      return res.status(200).json({
-        ok: true,
-        message: 'Inicio de sesión correcto.',
-        token,
-        rol: 'productor',
-        usuario: serializarProductor(productor)
-      });
-    }
-
-    if (comprador && (await bcrypt.compare(password, comprador.password))) {
-      const token = generarToken(comprador, 'comprador');
-      return res.status(200).json({
-        ok: true,
-        message: 'Inicio de sesión correcto.',
-        token,
-        rol: 'comprador',
-        usuario: serializarComprador(comprador)
-      });
-    }
-
-    return res.status(401).json({
-      ok: false,
-      message: 'Credenciales inválidas.'
+    const usuario = await Usuario.findOne({
+      where: { email: email.toLowerCase() },
+      include: [{ model: Comercio, as: 'comercio', attributes: ['id', 'nombre_local'] }]
     });
+
+    if (!usuario || !(await bcrypt.compare(password, usuario.password))) {
+      return res.status(401).json({ ok: false, mensaje: 'Credenciales inválidas.' });
+    }
+
+    const token = generarToken(usuario);
+    res.cookie(NOMBRE_COOKIE_JWT, token, cookieJwtOpciones());
+
+    const payload = { ...datosUsuarioPublicos(usuario) };
+    if (usuario.comercio) {
+      payload.comercioId = usuario.comercio.id;
+      payload.nombre_local = usuario.comercio.nombre_local;
+    }
+
+    return res.status(200).json({ ok: true, mensaje: 'Inicio de sesión correcto.', usuario: payload });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = async (req, res) => {
+  // Limpiar la cookie equivale a cerrar la sesión en este esquema basado en cookie.
+  res.clearCookie(NOMBRE_COOKIE_JWT, { ...cookieJwtOpciones(), maxAge: undefined });
+  return res.status(200).json({ ok: true, mensaje: 'Sesión cerrada.' });
+};
+
+export const me = async (req, res, next) => {
+  try {
+    const usuario = await Usuario.findByPk(req.usuario.id, {
+      attributes: ['id', 'nombre', 'email', 'rol'],
+      include: [{ model: Comercio, as: 'comercio', attributes: ['id', 'nombre_local'] }]
+    });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensaje: 'Usuario no encontrado.' });
+    }
+    const payload = datosUsuarioPublicos(usuario);
+    if (usuario.comercio) {
+      payload.comercioId = usuario.comercio.id;
+      payload.nombre_local = usuario.comercio.nombre_local;
+    }
+    return res.status(200).json({ ok: true, usuario: payload });
   } catch (error) {
     next(error);
   }

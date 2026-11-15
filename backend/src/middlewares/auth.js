@@ -1,81 +1,40 @@
+// Middlewares de autenticación/autorización para SpotMarket.
+// verificarToken: lee el JWT desde la cookie httpOnly (no desde Authorization),
+// así el token no queda expuesto al JavaScript del navegador.
+// verificarRol: restringe el acceso según el rol guardado en el token.
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
+import { NOMBRE_COOKIE_JWT } from '../utils/cookie.js';
 
-const extraerUsuario = (header) => {
-  if (!header || !header.startsWith('Bearer ')) return null;
-  const token = header.split(' ')[1];
-  const payload = jwt.verify(token, env.JWT_SECRET);
-  return {
-    id: payload.id,
-    rol: payload.rol,
-    email: payload.email
-  };
-};
+export const verificarToken = (req, res, next) => {
+  const token = req.cookies?.[NOMBRE_COOKIE_JWT];
 
-export const authenticate = (req, res, next) => {
-  const header = req.headers.authorization;
-
-  if (!header || !header.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(401).json({
       ok: false,
-      message: 'No se proporcionó un token de autenticación.'
+      mensaje: 'No hay sesión activa. Iniciá sesión para continuar.'
     });
   }
 
   try {
-    req.usuario = extraerUsuario(header);
+    const payload = jwt.verify(token, env.JWT_SECRET);
+    req.usuario = { id: payload.id, rol: payload.rol, email: payload.email };
     next();
   } catch (error) {
     return res.status(401).json({
       ok: false,
-      message: 'Token inválido o expirado.'
+      mensaje: 'Sesión inválida o expirada.'
     });
   }
 };
 
-export const optionalAuthenticate = (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header) return next();
-
-  try {
-    req.usuario = extraerUsuario(header);
-    next();
-  } catch (error) {
-    return res.status(401).json({
+// Recibe uno o más roles permitidos, p. ej. verificarRol('comerciante').
+export const verificarRol = (...roles) => (req, res, next) => {
+  if (!req.usuario || !roles.includes(req.usuario.rol)) {
+    return res.status(403).json({
       ok: false,
-      message: 'Token inválido o expirado.'
+      mensaje: 'No tenés permisos para realizar esta acción.'
     });
   }
-};
-
-export const requireAuthForPriceFilter = (req, res, next) => {
-  const { precio_min, precio_max, orden } = req.query;
-  const usaFiltroPrecio =
-    precio_min !== undefined ||
-    precio_max !== undefined ||
-    (typeof orden === 'string' && orden.startsWith('precio'));
-
-  if (!usaFiltroPrecio) return next();
-
-  if (!req.usuario) {
-    return res.status(401).json({
-      ok: false,
-      codigo: 'REGISTRO_REQUERIDO',
-      message: 'Registrate o iniciá sesión para filtrar y ordenar por precio.'
-    });
-  }
-
-  return next();
-};
-
-export const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!req.usuario || !roles.includes(req.usuario.rol)) {
-      return res.status(403).json({
-        ok: false,
-        message: 'No tienes permisos para realizar esta acción.'
-      });
-    }
-    next();
-  };
+  next();
 };

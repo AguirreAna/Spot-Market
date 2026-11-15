@@ -1,12 +1,33 @@
+// Rutas de autenticación (/api/auth): registro, registro de comercio, login, logout y sesión actual.
 import { Router } from 'express';
+import {
+  registrar,
+  registrarComercio,
+  login,
+  logout,
+  me
+} from '../controllers/authController.js';
+import { validarRegistro, validarRegistroComercio, validarLogin } from '../validators/authValidator.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
-import { registrarProductorRules, loginRules } from '../validators/productorValidator.js';
-import { registrarProductor, login } from '../controllers/authController.js';
+import { verificarToken } from '../middlewares/auth.js';
+import { upload } from '../middlewares/upload.js';
 
 const router = Router();
 
-router.post('/productores/registro', registrarProductorRules, validateRequest, registrarProductor);
-router.post('/comercios/registro', registrarProductorRules, validateRequest, registrarProductor);
-router.post('/login', loginRules, validateRequest, login);
+router.post('/register', validarRegistro, validateRequest, registrar);
+
+// register-comercio recibe multipart/form-data (texto + fotos).
+// Multer corre primero para poblar req.body/req.files antes de validar.
+router.post(
+  '/register-comercio',
+  upload.array('fotos', 8),
+  validarRegistroComercio,
+  validateRequest,
+  registrarComercio
+);
+
+router.post('/login', validarLogin, validateRequest, login);
+router.post('/logout', verificarToken, logout);
+router.get('/me', verificarToken, me);
 
 export default router;

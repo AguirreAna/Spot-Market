@@ -1,100 +1,43 @@
-import { matchedData } from 'express-validator';
+// Controlador de productos: listado público con filtros, detalle (incrementa vistas),
+// y CRUD restringido al comerciante dueño (verificación de propiedad).
 import { Op } from 'sequelize';
-import { Producto } from '../models/Producto.js';
-import { Productor } from '../models/Productor.js';
-import { resumenComercios, resumenProductos, adjuntarCalificacion } from '../utils/calificaciones.js';
+import { matchedData } from 'express-validator';
+import { db } from '../models/index.js';
+import { subirABufferCloudinary } from '../utils/cloudinaryUpload.js';
+import { obtenerComercioDelUsuario, productoDelComercio } from '../utils/propiedad.js';
 
-const incluirProductor = {
-  model: Productor,
-  as: 'productor',
-  attributes: [
-    'id',
-    'nombre',
-    'nombre_local',
-    'telefono',
-    'ubicacion',
-    'latitud',
-    'longitud',
-    'categoria',
-    'tipos_productos',
-    'fotos'
-  ]
-};
-
-const categoriasEquivalentes = (categoria) => {
-  if (categoria === 'mayorista') return ['mayorista', 'ambos'];
-  if (categoria === 'minorista') return ['minorista', 'ambos'];
-  return [categoria];
-};
+const { Producto, Comercio, Oferta, Valoracion } = db;
 
 export const listarProductos = async (req, res, next) => {
   try {
-    const {
-      productor_id,
-      en_stock,
-      tipo,
-      categoria,
-      q,
-      precio_min,
-      precio_max,
-      orden
-    } = req.query;
-
+    const { q, categoria, orden, en_oferta, en_cuotas, destacado } = req.query;
     const where = {};
-    if (productor_id) where.productor_id = productor_id;
-    if (en_stock === 'true') where.stock = { [Op.gt]: 0 };
-    if (tipo) where.tipo = tipo;
-
-    if (precio_min !== undefined || precio_max !== undefined) {
-      where.precio = {};
-      if (precio_min !== undefined && precio_min !== '') where.precio[Op.gte] = Number(precio_min);
-      if (precio_max !== undefined && precio_max !== '') where.precio[Op.lte] = Number(precio_max);
-    }
-
-    if (q) {
-      const texto = `%${String(q).trim()}%`;
-      where[Op.or] = [
-        { nombre: { [Op.like]: texto } },
-        { descripcion: { [Op.like]: texto } },
-        { especificacion: { [Op.like]: texto } }
-      ];
-    }
-
-    const incluir = { ...incluirProductor };
-    if (categoria) {
-      incluir.where = { categoria: { [Op.in]: categoriasEquivalentes(categoria) } };
-      incluir.required = true;
-    }
+    if (q) where.nombre = { [Op.like]: `%${q}%` };
+    if (categoria && categoria !== 'Todas') where.categoria = categoria;
+    if (en_oferta === 'true') where.precio_oferta = { [Op.not]: null };
+    if (en_cuotas === 'true') where.cuotas = { [Op.not]: null };
+    if (destacado === 'true') where.destacado = true;
 
     let order = [['createdAt', 'DESC']];
     if (orden === 'precio_asc') order = [['precio', 'ASC']];
     if (orden === 'precio_desc') order = [['precio', 'DESC']];
+    if (orden === 'nombre') order = [['nombre', 'ASC']];
+    if (orden === 'vistas_desc' || orden === 'populares') order = [['vistas', 'DESC']];
+    if (orden === 'likes_desc') order = [['likes', 'DESC']];
 
-    const productos = await Producto.findAll({ where, include: [incluir], order });
-
-    const [resumenP, resumenC] = await Promise.all([
-      resumenProductos(productos.map((p) => p.id)),
-      resumenComercios([...new Set(productos.map((p) => p.productor_id))])
-    ]);
-
-    let data = productos.map((p) => {
-      const json = adjuntarCalificacion(p.toJSON(), resumenP);
-      if (json.productor) {
-        json.productor = adjuntarCalificacion(json.productor, resumenC);
-      }
-      return json;
+    const productos = await Producto.findAll({
+      where,
+      order,
+      include: [
+        {
+          model: Comercio,
+          as: 'comercio',
+          attributes: ['id', 'nombre_local', 'tipo_comercio', 'direccion', 'telefono', 'latitud', 'longitud']
+        },
+        { model: Oferta, as: 'ofertas' }
+      ]
     });
-
-    if (orden === 'calificacion') {
-      data.sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
-    }
-
-    return res.status(200).json({
-      ok: true,
-      message: 'Listado de productos.',
-      data,
-      total: data.length
-    });
+    return res.json({ ok: true, productos, total: productos.length });
   } catch (error) {
     next(error);
   }
@@ -103,33 +46,25 @@ export const listarProductos = async (req, res, next) => {
 export const obtenerProducto = async (req, res, next) => {
   try {
     const { id } = req.params;
-
+    // Incrementar vistas al abrir el detalle (para ranking de más buscados/vistos)
+    await Producto.increment('vistas', { where: { id } });
     const producto = await Producto.findByPk(id, {
-      include: [incluirProductor]
+      include: [
+        {
+          model: Comercio,
+          as: 'comercio',
+          attributes: ['id', 'nombre_local', 'tipo_comercio', 'direccion', 'telefono', 'latitud', 'longitud']
+        },
+        { model: Oferta, as: 'ofertas' },
+        {
+          model: Valoracion,
+          as: 'valoraciones',
+          attributes: ['id', 'puntuacion', 'comentario', 'createdAt']
+        }
+      ]
     });
-
-    if (!producto) {
-      return res.status(404).json({
-        ok: false,
-        message: 'Producto no encontrado.'
-      });
-    }
-
-    const [resumenP, resumenC] = await Promise.all([
-      resumenProductos([producto.id]),
-      resumenComercios([producto.productor_id])
-    ]);
-
-    const data = adjuntarCalificacion(producto.toJSON(), resumenP);
-    if (data.productor) {
-      data.productor = adjuntarCalificacion(data.productor, resumenC);
-    }
-
-    return res.status(200).json({
-      ok: true,
-      message: 'Producto obtenido.',
-      data
-    });
+    if (!producto) return res.status(404).json({ ok: false, mensaje: 'Producto no encontrado.' });
+    return res.json({ ok: true, producto });
   } catch (error) {
     next(error);
   }
@@ -137,33 +72,38 @@ export const obtenerProducto = async (req, res, next) => {
 
 export const crearProducto = async (req, res, next) => {
   try {
-    const data = matchedData(req);
+    const comercio = await obtenerComercioDelUsuario(req.usuario.id);
+    if (!comercio) return res.status(403).json({ ok: false, mensaje: 'No tenés un comercio registrado.' });
 
-    const productor = await Productor.findByPk(req.usuario.id);
-    if (!productor) {
-      return res.status(400).json({
-        ok: false,
-        message: 'No se puede publicar un producto sin un comercio asignado.'
-      });
+    const data = matchedData(req);
+    let imagen_url = req.body.imagen_url || null;
+    let imagen_public_id = null;
+
+    if (req.file) {
+      try {
+        const subida = await subirABufferCloudinary(req.file.buffer, 'spotmarket/productos');
+        imagen_url = subida.url;
+        imagen_public_id = subida.public_id;
+      } catch (errUpload) {
+        console.warn('Fallo upload Cloudinary, guardando URL por defecto:', errUpload.message);
+      }
     }
 
     const producto = await Producto.create({
       nombre: data.nombre,
-      descripcion: data.descripcion,
-      especificacion: data.especificacion || null,
-      tipo: data.tipo || null,
-      imagen: data.imagen || null,
+      descripcion: data.descripcion || null,
+      especificaciones: data.especificaciones || null,
       precio: data.precio,
       precio_oferta: data.precio_oferta || null,
-      stock: data.stock,
-      productor_id: productor.id
+      tipo_precio: data.tipo_precio || 'diario',
+      cuotas: data.cuotas || null,
+      destacado: Boolean(data.destacado),
+      categoria: data.categoria || null,
+      imagen_url,
+      imagen_public_id,
+      comercioId: comercio.id
     });
-
-    return res.status(201).json({
-      ok: true,
-      message: 'Producto publicado correctamente.',
-      data: producto
-    });
+    return res.status(201).json({ ok: true, mensaje: 'Producto creado exitosamente.', producto });
   } catch (error) {
     next(error);
   }
@@ -171,38 +111,28 @@ export const crearProducto = async (req, res, next) => {
 
 export const actualizarProducto = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const data = matchedData(req);
+    const comercio = await obtenerComercioDelUsuario(req.usuario.id);
+    if (!comercio) return res.status(403).json({ ok: false, mensaje: 'No tenés un comercio registrado.' });
 
-    const producto = await Producto.findByPk(id);
-    if (!producto) {
-      return res.status(404).json({
-        ok: false,
-        message: 'Producto no encontrado.'
-      });
-    }
+    // Verificación de propiedad: solo el dueño puede modificar su producto
+    const producto = await productoDelComercio(req.params.id, comercio.id);
+    if (!producto) return res.status(404).json({ ok: false, mensaje: 'Producto no encontrado o no te pertenece.' });
 
-    if (Number(req.usuario.id) !== producto.productor_id) {
-      return res.status(403).json({
-        ok: false,
-        message: 'Solo el comercio dueño del producto puede modificarlo.'
-      });
-    }
-
-    const cambios = {};
-    ['nombre', 'descripcion', 'especificacion', 'tipo', 'imagen', 'precio', 'precio_oferta', 'stock'].forEach(
-      (campo) => {
-        if (data[campo] !== undefined) cambios[campo] = data[campo];
+    const data = matchedData(req, { includeOptionals: true });
+    if (req.file) {
+      try {
+        const subida = await subirABufferCloudinary(req.file.buffer, 'spotmarket/productos');
+        data.imagen_url = subida.url;
+        data.imagen_public_id = subida.public_id;
+      } catch (errUpload) {
+        console.warn('Fallo upload Cloudinary en actualización:', errUpload.message);
       }
-    );
+    } else if (req.body.imagen_url) {
+      data.imagen_url = req.body.imagen_url;
+    }
 
-    await producto.update(cambios);
-
-    return res.status(200).json({
-      ok: true,
-      message: 'Producto actualizado correctamente.',
-      data: producto
-    });
+    await producto.update(data);
+    return res.json({ ok: true, mensaje: 'Producto actualizado exitosamente.', producto });
   } catch (error) {
     next(error);
   }
@@ -210,29 +140,12 @@ export const actualizarProducto = async (req, res, next) => {
 
 export const eliminarProducto = async (req, res, next) => {
   try {
-    const { id } = req.params;
-
-    const producto = await Producto.findByPk(id);
-    if (!producto) {
-      return res.status(404).json({
-        ok: false,
-        message: 'Producto no encontrado.'
-      });
-    }
-
-    if (Number(req.usuario.id) !== producto.productor_id) {
-      return res.status(403).json({
-        ok: false,
-        message: 'Solo el comercio dueño del producto puede eliminarlo.'
-      });
-    }
-
+    const comercio = await obtenerComercioDelUsuario(req.usuario.id);
+    if (!comercio) return res.status(403).json({ ok: false, mensaje: 'No tenés un comercio registrado.' });
+    const producto = await productoDelComercio(req.params.id, comercio.id);
+    if (!producto) return res.status(404).json({ ok: false, mensaje: 'Producto no encontrado o no te pertenece.' });
     await producto.destroy();
-
-    return res.status(200).json({
-      ok: true,
-      message: 'Producto eliminado correctamente (soft delete).'
-    });
+    return res.json({ ok: true, mensaje: 'Producto eliminado correctamente.' });
   } catch (error) {
     next(error);
   }

@@ -1,33 +1,22 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import crypto from 'node:crypto';
+// Configuración de Multer para recibir imágenes en memoria (memoryStorage).
+// memoryStorage: el archivo queda en req.file.buffer, lo que permite enviarlo
+// directo a Cloudinary con upload_stream sin tocar el disco del servidor.
 import multer from 'multer';
-import { env } from '../config/env.js';
 
-const carpeta = path.resolve(process.cwd(), env.UPLOAD_DIR);
-fs.mkdirSync(carpeta, { recursive: true });
-
-const extensionesPermitidas = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, carpeta),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const nombre = `${Date.now()}-${crypto.randomUUID()}${ext}`;
-    cb(null, nombre);
-  }
-});
+const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (!file.mimetype.startsWith('image/') || !extensionesPermitidas.has(ext)) {
-    return cb(new Error('Solo se permiten imágenes JPG, PNG, WEBP o GIF.'));
+  if (!TIPOS_PERMITIDOS.includes(file.mimetype)) {
+    const err = new Error('Tipo de imagen no permitido. Usá jpg, png o webp.');
+    err.statusCode = 400;
+    return cb(err);
   }
   cb(null, true);
 };
 
 export const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_BYTES },
+  fileFilter
 });

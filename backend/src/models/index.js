@@ -1,124 +1,49 @@
-import { Productor } from './Productor.js';
-import { Producto } from './Producto.js';
-import { Comprador } from './Comprador.js';
-import { Transaccion } from './Transaccion.js';
-import { Chat } from './Chat.js';
-import { Calificacion } from './Calificacion.js';
+// Registro central de modelos Sequelize y sus relaciones (SpotMarket).
+// Se importa desde server.js para que Sequelize conozca los modelos antes de sync.
+// Relaciones: Usuario1:1Comercio, Comercio1:NProducto, Producto1:NOferta,
+// Producto1:NValoracion, Usuario N:M Producto (Favoritos).
 import { sequelize } from '../config/db.js';
+import { Usuario } from './Usuario.js';
+import { Comercio } from './Comercio.js';
+import { FotoComercio } from './FotoComercio.js';
+import { Producto } from './Producto.js';
+import { Oferta } from './Oferta.js';
+import { Valoracion } from './Valoracion.js';
+import { Favorito } from './Favorito.js';
 
-Productor.hasMany(Producto, {
-  foreignKey: 'productor_id',
-  as: 'productos'
-});
-Producto.belongsTo(Productor, {
-  foreignKey: 'productor_id',
-  as: 'productor'
-});
+// Usuario 1:1 Comercio
+Usuario.hasOne(Comercio, { foreignKey: 'usuarioId', as: 'comercio' });
+Comercio.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
 
-Comprador.hasMany(Transaccion, {
-  foreignKey: 'comprador_id',
-  as: 'pedidos'
-});
-Transaccion.belongsTo(Comprador, {
-  foreignKey: 'comprador_id',
-  as: 'comprador'
-});
+// Comercio 1:N FotoComercio
+Comercio.hasMany(FotoComercio, { foreignKey: 'comercioId', as: 'fotos' });
+FotoComercio.belongsTo(Comercio, { foreignKey: 'comercioId', as: 'comercio' });
 
-Producto.hasMany(Transaccion, {
-  foreignKey: 'producto_id',
-  as: 'transacciones'
-});
-Transaccion.belongsTo(Producto, {
-  foreignKey: 'producto_id',
-  as: 'producto'
-});
+// Comercio 1:N Producto
+Comercio.hasMany(Producto, { foreignKey: 'comercioId', as: 'productos' });
+Producto.belongsTo(Comercio, { foreignKey: 'comercioId', as: 'comercio' });
 
-Productor.belongsToMany(Comprador, {
-  through: { model: Transaccion, unique: false },
-  foreignKey: 'productor_id',
-  otherKey: 'comprador_id',
-  as: 'compradores'
-});
-Comprador.belongsToMany(Productor, {
-  through: { model: Transaccion, unique: false },
-  foreignKey: 'comprador_id',
-  otherKey: 'productor_id',
-  as: 'productores'
-});
+// Producto 1:N Oferta
+Producto.hasMany(Oferta, { foreignKey: 'productoId', as: 'ofertas' });
+Oferta.belongsTo(Producto, { foreignKey: 'productoId', as: 'producto' });
 
-Productor.hasMany(Transaccion, {
-  foreignKey: 'productor_id',
-  as: 'transacciones'
-});
-Transaccion.belongsTo(Productor, {
-  foreignKey: 'productor_id',
-  as: 'productor'
-});
+// Producto 1:N Valoracion
+Producto.hasMany(Valoracion, { foreignKey: 'productoId', as: 'valoraciones' });
+Valoracion.belongsTo(Producto, { foreignKey: 'productoId', as: 'producto' });
+Usuario.hasMany(Valoracion, { foreignKey: 'usuarioId', as: 'valoraciones' });
+Valoracion.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
 
-Productor.hasMany(Chat, {
-  foreignKey: 'productor_id',
-  as: 'chats'
-});
-Chat.belongsTo(Productor, {
-  foreignKey: 'productor_id',
-  as: 'productor'
-});
-
-Comprador.hasMany(Chat, {
-  foreignKey: 'comprador_id',
-  as: 'chats'
-});
-Chat.belongsTo(Comprador, {
-  foreignKey: 'comprador_id',
-  as: 'comprador'
-});
-
-Productor.belongsToMany(Comprador, {
-  through: { model: Chat, unique: false },
-  foreignKey: 'productor_id',
-  otherKey: 'comprador_id',
-  as: 'compradoresChat'
-});
-Comprador.belongsToMany(Productor, {
-  through: { model: Chat, unique: false },
-  foreignKey: 'comprador_id',
-  otherKey: 'productor_id',
-  as: 'productoresChat'
-});
-
-Comprador.hasMany(Calificacion, {
-  foreignKey: 'usuario_id',
-  as: 'calificaciones'
-});
-Calificacion.belongsTo(Comprador, {
-  foreignKey: 'usuario_id',
-  as: 'usuario'
-});
-
-Productor.hasMany(Calificacion, {
-  foreignKey: 'productor_id',
-  as: 'calificaciones'
-});
-Calificacion.belongsTo(Productor, {
-  foreignKey: 'productor_id',
-  as: 'comercio'
-});
-
-Producto.hasMany(Calificacion, {
-  foreignKey: 'producto_id',
-  as: 'calificaciones'
-});
-Calificacion.belongsTo(Producto, {
-  foreignKey: 'producto_id',
-  as: 'producto'
-});
+// Usuario N:M Producto (Favoritos)
+Usuario.belongsToMany(Producto, { through: Favorito, foreignKey: 'usuarioId', otherKey: 'productoId', as: 'favoritos' });
+Producto.belongsToMany(Usuario, { through: Favorito, foreignKey: 'productoId', otherKey: 'usuarioId', as: 'usuariosFavoritos' });
 
 export const db = {
-  Productor,
+  sequelize,
+  Usuario,
+  Comercio,
+  FotoComercio,
   Producto,
-  Comprador,
-  Transaccion,
-  Chat,
-  Calificacion,
-  sequelize
+  Oferta,
+  Valoracion,
+  Favorito
 };

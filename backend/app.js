@@ -1,46 +1,32 @@
-import fs from 'node:fs';
-import path from 'node:path';
+// Configuración principal de Express para SpotMarket.
+// Registra middlewares globales (CORS con credenciales para cookies httpOnly,
+// parseo JSON, cookies, logs) y monta la API bajo el prefijo /api.
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import routes from './src/routes/index.js';
-import { env } from './src/config/env.js';
 import { errorHandler, notFoundHandler } from './src/middlewares/errorHandler.js';
+import { env } from './src/config/env.js';
 
 export const app = express();
 
-app.use(cors());
+// CORS con credentials: necesario para que el navegador envíe/reciba la cookie httpOnly del JWT.
+const origenesPermitidos = env.CORS_ORIGIN
+  ? env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : ['http://localhost:5173'];
+
+app.use(
+  cors({
+    origin: origenesPermitidos,
+    credentials: true
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan('dev'));
 
-app.use('/uploads', express.static(env.UPLOAD_DIR));
-app.use('/api/v1', routes);
-app.use('/api', notFoundHandler);
-
-app.use('/assets', express.static(path.join(env.FRONTEND_DIR, 'assets')));
-
-app.get('/', (req, res, next) => {
-  const inicio = path.join(env.FRONTEND_DIR, 'index.html');
-  if (fs.existsSync(inicio)) return res.sendFile(inicio);
-  return next();
-});
-
-app.get(/^\/[^/]+\.html$/, (req, res, next) => {
-  const pagina = path.join(env.FRONTEND_DIR, path.basename(req.path));
-  if (fs.existsSync(pagina)) return res.sendFile(pagina);
-  return next();
-});
-
-app.use((req, res, next) => {
-  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-
-  const pagina404 = path.join(env.FRONTEND_DIR, '404.html');
-  if (fs.existsSync(pagina404)) {
-    return res.status(404).sendFile(pagina404);
-  }
-
-  return next();
-});
+app.use('/api', routes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
