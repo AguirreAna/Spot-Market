@@ -1,0 +1,19 @@
+/* Animaciones del fondo del login: paneo de grilla urbana y pulso tipo radar. */
+@keyframes cityDrift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-60px, -60px); }
+}
+@keyframes radarPulse {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.city-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: cityDrift 18s linear infinite;
+}
+.radar-pulse {
+  animation: radarPulse 2.4s ease-out infinite;
+}
