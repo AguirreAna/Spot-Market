@@ -1,7 +1,7 @@
 {
-  "name": "frontend-vanilla-productores-mercados",
+  "name": "spot-market-frontend",
   "version": "1.0.0",
-  "description": "Frontend HTML/CSS/JS (vanilla) + Bootstrap - Plataforma de Conexión Productores Rurales - Mercados Urbanos",
+  "description": "Frontend HTML/CSS/JS vanilla + Bootstrap de Spot Market",
   "type": "module",
   "scripts": {
     "start": "node servidor.js",

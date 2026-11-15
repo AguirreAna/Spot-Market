@@ -3,6 +3,7 @@ import { Producto } from './Producto.js';
 import { Comprador } from './Comprador.js';
 import { Transaccion } from './Transaccion.js';
 import { Chat } from './Chat.js';
+import { Calificacion } from './Calificacion.js';
 import { sequelize } from '../config/db.js';
 
 Productor.hasMany(Producto, {
@@ -85,11 +86,39 @@ Comprador.belongsToMany(Productor, {
   as: 'productoresChat'
 });
 
+Comprador.hasMany(Calificacion, {
+  foreignKey: 'usuario_id',
+  as: 'calificaciones'
+});
+Calificacion.belongsTo(Comprador, {
+  foreignKey: 'usuario_id',
+  as: 'usuario'
+});
+
+Productor.hasMany(Calificacion, {
+  foreignKey: 'productor_id',
+  as: 'calificaciones'
+});
+Calificacion.belongsTo(Productor, {
+  foreignKey: 'productor_id',
+  as: 'comercio'
+});
+
+Producto.hasMany(Calificacion, {
+  foreignKey: 'producto_id',
+  as: 'calificaciones'
+});
+Calificacion.belongsTo(Producto, {
+  foreignKey: 'producto_id',
+  as: 'producto'
+});
+
 export const db = {
   Productor,
   Producto,
   Comprador,
   Transaccion,
   Chat,
+  Calificacion,
   sequelize
 };

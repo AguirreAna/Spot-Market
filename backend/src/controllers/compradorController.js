@@ -1,8 +1,9 @@
+import bcrypt from 'bcryptjs';
 import { matchedData } from 'express-validator';
 import { Comprador } from '../models/Comprador.js';
 import { Productor } from '../models/Productor.js';
 import { Transaccion } from '../models/Transaccion.js';
-import { Chat } from '../models/Chat.js';
+import { serializarComprador } from './authController.js';
 
 export const listarCompradores = async (req, res, next) => {
   try {
@@ -12,7 +13,7 @@ export const listarCompradores = async (req, res, next) => {
 
     return res.status(200).json({
       ok: true,
-      message: 'Listado de compradores.',
+      message: 'Listado de usuarios.',
       data: compradores,
       total: compradores.length
     });
@@ -39,13 +40,13 @@ export const obtenerComprador = async (req, res, next) => {
     if (!comprador) {
       return res.status(404).json({
         ok: false,
-        message: 'Comprador no encontrado.'
+        message: 'Usuario no encontrado.'
       });
     }
 
     return res.status(200).json({
       ok: true,
-      message: 'Comprador obtenido.',
+      message: 'Usuario obtenido.',
       data: comprador
     });
   } catch (error) {
@@ -62,29 +63,32 @@ export const actualizarComprador = async (req, res, next) => {
     if (!comprador) {
       return res.status(404).json({
         ok: false,
-        message: 'Comprador no encontrado.'
+        message: 'Usuario no encontrado.'
       });
     }
 
-    if (req.usuario.rol === 'comprador' && Number(req.usuario.id) !== comprador.id) {
+    if (Number(req.usuario.id) !== comprador.id) {
       return res.status(403).json({
         ok: false,
         message: 'Solo puedes modificar tu propio perfil.'
       });
     }
 
-    await comprador.update(data);
+    const cambios = {};
+    ['nombre', 'telefono', 'tipo', 'ubicacion'].forEach((campo) => {
+      if (data[campo] !== undefined) cambios[campo] = data[campo];
+    });
+
+    if (data.password) {
+      cambios.password = await bcrypt.hash(data.password, 10);
+    }
+
+    await comprador.update(cambios);
 
     return res.status(200).json({
       ok: true,
-      message: 'Comprador actualizado correctamente.',
-      data: {
-        id: comprador.id,
-        nombre: comprador.nombre,
-        email: comprador.email,
-        tipo: comprador.tipo,
-        ubicacion: comprador.ubicacion
-      }
+      message: 'Perfil actualizado correctamente.',
+      data: serializarComprador(comprador)
     });
   } catch (error) {
     next(error);
@@ -99,11 +103,11 @@ export const eliminarComprador = async (req, res, next) => {
     if (!comprador) {
       return res.status(404).json({
         ok: false,
-        message: 'Comprador no encontrado.'
+        message: 'Usuario no encontrado.'
       });
     }
 
-    if (req.usuario.rol === 'comprador' && Number(req.usuario.id) !== comprador.id) {
+    if (Number(req.usuario.id) !== comprador.id) {
       return res.status(403).json({
         ok: false,
         message: 'Solo puedes eliminar tu propio perfil.'
@@ -114,7 +118,7 @@ export const eliminarComprador = async (req, res, next) => {
 
     return res.status(200).json({
       ok: true,
-      message: 'Comprador eliminado correctamente (soft delete).'
+      message: 'Usuario eliminado correctamente (soft delete).'
     });
   } catch (error) {
     next(error);
@@ -125,8 +129,15 @@ export const listaProductoresVinculados = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    if (req.usuario.rol !== 'comprador' || Number(req.usuario.id) !== Number(id)) {
+      return res.status(403).json({
+        ok: false,
+        message: 'Solo podés consultar tus propios comercios vinculados.'
+      });
+    }
+
     const productores = await Productor.findAll({
-      attributes: ['id', 'nombre', 'email', 'ubicacion', 'suscripcion'],
+      attributes: ['id', 'nombre', 'nombre_local', 'email', 'telefono', 'ubicacion', 'categoria', 'suscripcion'],
       include: [
         {
           model: Comprador,
@@ -139,7 +150,7 @@ export const listaProductoresVinculados = async (req, res, next) => {
 
     return res.status(200).json({
       ok: true,
-      message: 'Productores conectados al comprador por transacciones.',
+      message: 'Comercios conectados al usuario por transacciones.',
       data: productores
     });
   } catch (error) {

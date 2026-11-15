@@ -1,7 +1,7 @@
 {
-  "name": "backend-plataforma-productores-mercados",
+  "name": "spot-market-backend",
   "version": "1.0.0",
-  "description": "API REST - Plataforma de Conexión Productores Rurales - Mercados Urbanos",
+  "description": "API REST - Spot Market | Mercados urbanos y comercios de barrio",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -13,9 +13,10 @@
   "keywords": [
     "express",
     "sequelize",
+    "sqlite",
     "mysql",
-    "hackathon",
-    "productores",
+    "spot-market",
+    "comercios",
     "mercados"
   ],
   "author": "",
@@ -28,8 +29,10 @@
     "express-validator": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.0",
-    "sequelize": "^6.37.3"
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

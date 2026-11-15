@@ -18,16 +18,20 @@ export const Comprador = sequelize.define(
       allowNull: false,
       unique: true
     },
+    telefono: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
     password: {
       type: DataTypes.STRING(255),
       allowNull: false
     },
     tipo: {
-      type: DataTypes.ENUM('comercio', 'restaurante', 'mayorista'),
+      type: DataTypes.ENUM('comercio', 'restaurante', 'mayorista', 'vecino'),
       allowNull: false
     },
     ubicacion: {
-      type: DataTypes.STRING(150),
+      type: DataTypes.STRING(200),
       allowNull: false
     }
   },

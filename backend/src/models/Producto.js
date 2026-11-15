@@ -17,9 +17,28 @@ export const Producto = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false
     },
+    especificacion: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    tipo: {
+      type: DataTypes.STRING(60),
+      allowNull: true
+    },
+    imagen: {
+      type: DataTypes.STRING(300),
+      allowNull: true
+    },
     precio: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      validate: {
+        min: 0.01
+      }
+    },
+    precio_oferta: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
       validate: {
         min: 0.01
       }

@@ -13,6 +13,38 @@ const generarToken = (usuario, rol) => {
   );
 };
 
+export const normalizarLista = (valor) => {
+  if (Array.isArray(valor)) {
+    return [...new Set(valor.map((v) => String(v).trim()).filter(Boolean))];
+  }
+  return [...new Set(String(valor || '').split(',').map((v) => v.trim()).filter(Boolean))];
+};
+
+export const serializarProductor = (productor) => ({
+  id: productor.id,
+  nombre: productor.nombre,
+  nombre_local: productor.nombre_local,
+  email: productor.email,
+  telefono: productor.telefono,
+  ubicacion: productor.ubicacion,
+  latitud: productor.latitud,
+  longitud: productor.longitud,
+  categoria: productor.categoria,
+  tipos_productos: productor.tipos_productos || [],
+  fotos: productor.fotos || [],
+  descripcion: productor.descripcion,
+  suscripcion: productor.suscripcion
+});
+
+export const serializarComprador = (comprador) => ({
+  id: comprador.id,
+  nombre: comprador.nombre,
+  email: comprador.email,
+  telefono: comprador.telefono,
+  tipo: comprador.tipo,
+  ubicacion: comprador.ubicacion
+});
+
 export const registrarProductor = async (req, res, next) => {
   try {
     const data = matchedData(req);
@@ -33,10 +65,17 @@ export const registrarProductor = async (req, res, next) => {
     const hash = await bcrypt.hash(data.password, 10);
     const productor = await Productor.create({
       nombre: data.nombre,
+      nombre_local: data.nombre_local,
       email,
+      telefono: data.telefono,
       password: hash,
       ubicacion: data.ubicacion,
-      tipo_productos: data.tipo_productos,
+      latitud: data.latitud || null,
+      longitud: data.longitud || null,
+      categoria: data.categoria,
+      tipos_productos: normalizarLista(data.tipos_productos),
+      fotos: normalizarLista(data.fotos),
+      descripcion: data.descripcion || null,
       suscripcion: data.suscripcion || 'estandar'
     });
 
@@ -44,16 +83,10 @@ export const registrarProductor = async (req, res, next) => {
 
     return res.status(201).json({
       ok: true,
-      message: 'Productor registrado correctamente.',
+      message: 'Comercio registrado correctamente.',
       token,
-      usuario: {
-        id: productor.id,
-        nombre: productor.nombre,
-        email: productor.email,
-        ubicacion: productor.ubicacion,
-        tipo_productos: productor.tipo_productos,
-        suscripcion: productor.suscripcion
-      }
+      rol: 'productor',
+      usuario: serializarProductor(productor)
     });
   } catch (error) {
     next(error);
@@ -81,6 +114,7 @@ export const registrarComprador = async (req, res, next) => {
     const comprador = await Comprador.create({
       nombre: data.nombre,
       email,
+      telefono: data.telefono || null,
       password: hash,
       tipo: data.tipo,
       ubicacion: data.ubicacion
@@ -90,15 +124,10 @@ export const registrarComprador = async (req, res, next) => {
 
     return res.status(201).json({
       ok: true,
-      message: 'Comprador registrado correctamente.',
+      message: 'Usuario registrado correctamente.',
       token,
-      usuario: {
-        id: comprador.id,
-        nombre: comprador.nombre,
-        email: comprador.email,
-        tipo: comprador.tipo,
-        ubicacion: comprador.ubicacion
-      }
+      rol: 'comprador',
+      usuario: serializarComprador(comprador)
     });
   } catch (error) {
     next(error);
@@ -107,8 +136,7 @@ export const registrarComprador = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email } = matchedData(req);
-    const { password } = matchedData(req);
+    const { email, password } = matchedData(req);
     const emailNormalizado = email.toLowerCase();
 
     const [productor, comprador] = await Promise.all([
@@ -123,14 +151,7 @@ export const login = async (req, res, next) => {
         message: 'Inicio de sesión correcto.',
         token,
         rol: 'productor',
-        usuario: {
-          id: productor.id,
-          nombre: productor.nombre,
-          email: productor.email,
-          ubicacion: productor.ubicacion,
-          tipo_productos: productor.tipo_productos,
-          suscripcion: productor.suscripcion
-        }
+        usuario: serializarProductor(productor)
       });
     }
 
@@ -141,13 +162,7 @@ export const login = async (req, res, next) => {
         message: 'Inicio de sesión correcto.',
         token,
         rol: 'comprador',
-        usuario: {
-          id: comprador.id,
-          nombre: comprador.nombre,
-          email: comprador.email,
-          tipo: comprador.tipo,
-          ubicacion: comprador.ubicacion
-        }
+        usuario: serializarComprador(comprador)
       });
     }
 

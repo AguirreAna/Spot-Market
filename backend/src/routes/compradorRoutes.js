@@ -15,9 +15,9 @@ const router = Router();
 
 router.post('/registro', registrarCompradorRules, validateRequest, registrarComprador);
 
-router.get('/', listarCompradores);
+router.get('/', authenticate, listarCompradores);
 router.get('/:id/productores', authenticate, listaProductoresVinculados);
-router.get('/:id', obtenerComprador);
+router.get('/:id', authenticate, obtenerComprador);
 router.patch('/:id', authenticate, actualizarCompradorRules, validateRequest, actualizarComprador);
 router.delete('/:id', authenticate, eliminarComprador);
 

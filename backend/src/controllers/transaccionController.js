@@ -8,17 +8,16 @@ import { Chat } from '../models/Chat.js';
 
 export const listarTransacciones = async (req, res, next) => {
   try {
-    const { estado, productor_id, comprador_id } = req.query;
+    const { estado } = req.query;
 
     const where = {};
+    if (req.usuario.rol === 'productor') {
+      where.productor_id = req.usuario.id;
+    } else {
+      where.comprador_id = req.usuario.id;
+    }
     if (estado) {
       where.estado = estado;
-    }
-    if (productor_id) {
-      where.productor_id = productor_id;
-    }
-    if (comprador_id) {
-      where.comprador_id = comprador_id;
     }
 
     const transacciones = await Transaccion.findAll({
@@ -85,6 +84,17 @@ export const obtenerTransaccion = async (req, res, next) => {
       });
     }
 
+    const participa =
+      (req.usuario.rol === 'productor' && Number(req.usuario.id) === transaccion.productor_id) ||
+      (req.usuario.rol === 'comprador' && Number(req.usuario.id) === transaccion.comprador_id);
+
+    if (!participa) {
+      return res.status(403).json({
+        ok: false,
+        message: 'Solo los participantes del pedido pueden consultarlo.'
+      });
+    }
+
     return res.status(200).json({
       ok: true,
       message: 'Transacción obtenida.',
@@ -98,6 +108,13 @@ export const obtenerTransaccion = async (req, res, next) => {
 export const crearTransaccion = async (req, res, next) => {
   try {
     const data = matchedData(req);
+
+    if (req.usuario.rol !== 'comprador') {
+      return res.status(403).json({
+        ok: false,
+        message: 'Solo los usuarios pueden realizar pedidos.'
+      });
+    }
 
     const producto = await Producto.findByPk(data.producto_id);
     if (!producto) {

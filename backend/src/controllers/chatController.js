@@ -5,15 +5,10 @@ import { Comprador } from '../models/Comprador.js';
 
 export const listarChats = async (req, res, next) => {
   try {
-    const { productor_id, comprador_id } = req.query;
-
-    const where = {};
-    if (productor_id) {
-      where.productor_id = productor_id;
-    }
-    if (comprador_id) {
-      where.comprador_id = comprador_id;
-    }
+    const where =
+      req.usuario.rol === 'productor'
+        ? { productor_id: req.usuario.id }
+        : { comprador_id: req.usuario.id };
 
     const mensajes = await Chat.findAll({
       where,
@@ -45,6 +40,17 @@ export const listarChats = async (req, res, next) => {
 export const conversacionEntre = async (req, res, next) => {
   try {
     const { productor_id, comprador_id } = req.params;
+
+    const participa =
+      (req.usuario.rol === 'productor' && Number(req.usuario.id) === Number(productor_id)) ||
+      (req.usuario.rol === 'comprador' && Number(req.usuario.id) === Number(comprador_id));
+
+    if (!participa) {
+      return res.status(403).json({
+        ok: false,
+        message: 'Solo los participantes de la conversación pueden verla.'
+      });
+    }
 
     const mensajes = await Chat.findAll({
       where: {

@@ -13,7 +13,8 @@ const iniciarServidor = async () => {
   }
 
   try {
-    await sequelize.sync({ alter: env.NODE_ENV === 'development' });
+    const alterar = env.DB_DIALECT !== 'sqlite' && env.NODE_ENV === 'development';
+    await sequelize.sync({ alter: alterar });
     console.log('Modelos sincronizados con la base de datos.');
   } catch (error) {
     console.error('Error al sincronizar los modelos:', error.message);
@@ -21,7 +22,7 @@ const iniciarServidor = async () => {
   }
 
   app.listen(env.PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${env.PORT}`);
+    console.log(`Spot Market API corriendo en http://localhost:${env.PORT}`);
     console.log(`Documentación de rutas: http://localhost:${env.PORT}/api/v1`);
   });
 };

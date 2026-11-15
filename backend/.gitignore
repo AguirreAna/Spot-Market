@@ -19,3 +19,8 @@ Thumbs.db
 # Builds
 dist/
 build/
+
+# Base de datos local y archivos subidos
+data/
+uploads/
+*.sqlite

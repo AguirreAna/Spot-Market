@@ -26,7 +26,7 @@ const MIME = {
 
 const servirArchivo = (ruta, res) => {
   const abs = path.normalize(path.join(__dirname, ruta));
-  if (!abs.startsWith(__dirname)) {
+  if (abs !== __dirname && !abs.startsWith(`${__dirname}${path.sep}`)) {
     res.writeHead(403);
     return res.end('Acceso denegado.');
   }
@@ -80,7 +80,7 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const ruta = decodeURIComponent(url.pathname);
 
-  if (ruta.startsWith('/api/')) {
+  if (ruta.startsWith('/api/') || ruta.startsWith('/uploads/')) {
     return proxyApi(req, res);
   }
 

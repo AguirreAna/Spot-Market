@@ -11,7 +11,7 @@ import {
 
 const router = Router();
 
-router.get('/', listarTransacciones);
+router.get('/', authenticate, listarTransacciones);
 router.get('/:id', authenticate, obtenerTransaccion);
 router.post('/', authenticate, crearTransaccionRules, validateRequest, crearTransaccion);
 router.patch('/:id/estado', authenticate, confirmarTransaccionRules, validateRequest, confirmarTransaccion);

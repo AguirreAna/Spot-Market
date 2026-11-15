@@ -1,234 +1,206 @@
-# 🌾 Plataforma de Conexión Productores Rurales – Mercados Urbanos
+# Spot Market
 
-Sistema web que permite a productores rurales de **Formosa y el NEA** publicar sus productos, negociar precios en tiempo real mediante un chat y conectar directamente con compradores urbanos (comercios, restaurantes y mayoristas), eliminando intermediarios.
+Marketplace local para conectar comercios de barrio (almacenes, kioscos, verdulerías, carnicerías, distribuidoras y más) con vecinos, restaurantes y otros comercios.
 
-**Stack completo:** Node.js + Express + Sequelize (MySQL) en el backend · HTML/CSS/JS (vanilla) + Bootstrap 5 en el frontend · Git Flow para el control de versiones.
+El catálogo se puede explorar sin cuenta. Para ver locales cercanos, filtrar u ordenar por precio, calificar comercios/productos, hacer pedidos y negociar por chat se requiere registro.
 
----
+## Características
 
-## 🗂️ FASE 1 · Diagrama de datos y flujo Git
+- Catálogo público de comercios y productos con búsqueda, filtros y orden.
+- Gating real desde el backend:
+  - filtros/orden por precio requieren sesión (`401 REGISTRO_REQUERIDO`);
+  - locales cercanos requieren sesión (`401`);
+  - calificar, pedir, chatear y editar perfiles requiere sesión (`401/403`).
+- Geolocalización de comercios y listado “Cerca de mí” por radio (Haversine).
+- Registro de usuarios (vecino, comercio, restaurante, mayorista) y de comerciantes con:
+  - nombre del local, responsable, teléfono, email, ubicación y coordenadas;
+  - categoría `minorista`, `mayorista` o `ambos`;
+  - tipos de productos que ofrece;
+  - fotos del local y descripción.
+- Publicación/edición/eliminación de productos con precio, precio de oferta, especificación, descripción, stock e imagen.
+- Calificación de comercios y productos de 1 a 5 estrellas con comentario (una reseña por usuario y destino; se actualiza, no se duplica).
+- Pedidos con estados `pendiente → confirmado → entregado`; la confirmación exige que el precio negociado coincida con una oferta enviada en el chat.
+- Chat de negociación entre usuario y comercio.
+- Imágenes subidas al backend (JPG, PNG, WEBP, GIF · máx. 5 MB) servidas desde `/uploads`.
+- Interfaz responsive en HTML/CSS/JS vanilla + Bootstrap 5.
 
-### Diagrama entidad-relación
+## Stack
 
-```
-┌────────────────────┐          ┌────────────────────┐
-│      PRODUCTOR     │          │      COMPRADOR     │
-├────────────────────┤          ├────────────────────┤
-│ id PK              │          │ id PK              │
-│ nombre             │          │ nombre             │
-│ email UQ           │          │ email UQ           │
-│ password           │          │ password           │
-│ ubicacion          │          │ tipo               │
-│ tipo_productos     │          │ ubicacion          │
-│ suscripcion        │          │                    │
-│ (premium/estandar) │          │                    │
-│ deletedAt (soft)   │          │ deletedAt (soft)   │
-└─────────┬──────────┘          └─────────┬──────────┘
-          │ 1                           N │
-          │                               │
-          │                       ┌───────┴────────┐
-          │ 1               M:N  │ PRODUCTO       │
-          │                ┌─────┤ id PK          │
-          │                │     │ nombre         │
-          │                │     │ descripcion    │
-          │                │     │ precio         │
-          │                │     │ stock          │
-          │                │     │ productor_id FK│
-          │                │     │ deletedAt(soft)│
-          │                │     └────────┬───────┘
-          │                │              │ 1
-          │                │              │ N
-          │                │     ┌────────┴────────┐
-          │                │     │   TRANSACCION   │  (M:N Productor↔Comprador)
-          │                └────►│ id PK           │
-          │                      │ producto_id FK  │
-          │                      │ productor_id FK │
-          └─────────────────────►│ comprador_id FK │
-                                 │ cantidad        │
-                                 │ precio_negociado│
-                                 │ estado          │
-                                 │ fecha           │
-                                 └──────────────────┘
+- Backend: Node.js, Express, Sequelize, JWT, bcryptjs, multer.
+- Base de datos: SQLite por defecto (cero configuración) o MySQL opcional.
+- Frontend: HTML, CSS, JavaScript ES Modules y Bootstrap 5.3 vía CDN. Servidor de desarrollo propio con proxy hacia la API.
 
-        CHAT (M:N Productor↔Comprador)
-        ├── id PK
-        ├── productor_id FK
-        ├── comprador_id FK
-        ├── mensaje
-        ├── precio_oferta   ← valida el precio negociado de la transacción
-        └── fecha
+## Puesta en marcha
 
-Suscripción Premium (1 a 1 opcional): modelada como campo ENUM en PRODUCTOR.
-```
+Requisitos: Node.js 18 o superior y npm.
 
-### Reglas de negocio implementadas
-
-| Regla | Implementación |
-|---|---|
-| No se pueden publicar productos sin productor | `crearProducto` valida que exista un `Productor` para el usuario autenticado (`productoController.js`) |
-| Emails únicos entre productores y compradores | Unique en BD + verificación cruzada `Productor`/`Comprador` en `authController.js` (respuesta 409) |
-| No confirmar pedidos con stock insuficiente | Verificación al crear la transacción y al confirmarla (`transaccionController.js`) |
-| Eliminación lógica (soft delete) | `paranoid: true` en Productor, Comprador, Producto, Transaccion y Chat |
-| Precio negociado > 0 y validado en el chat | `isFloat({ gt: 0 })` + la confirmación exige un mensaje en el `Chat` con `precio_oferta` igual al `precio_negociado` |
-
-### Flujo de trabajo Git (estándar IPF)
-
-```
-main
- └── develop
-      ├── feature/backend-api
-      ├── feature/frontend-react
-      ├── feature/frontend-vanilla
-      └── feature/docker-docs
-```
-
-- `main` → código estable y listo para entregar.
-- `develop` → integración de ramas `feature/*`.
-- `feature/<descripcion>` → cada funcionalidad se desarrolla y se fusiona en `develop` con merge limpio (sin fast-forward forzado).
-- Los commits se escriben en español con mensajes descriptivos (`git add -p` / commits atómicos).
-
----
-
-## 📦 FASE 2 · Backend (Express + Sequelize)
-
-### Estructura
-
-```
-backend/
- ├── src/
- │   ├── config/          # env.js, db.js (conexión MySQL + sequelize)
- │   ├── models/          # Productor, Producto, Comprador, Transaccion, Chat + index.js (asociaciones)
- │   ├── controllers/     # Lógica de negocio y respuestas HTTP
- │   ├── routes/          # Rutas con middlewares y validadores
- │   ├── middlewares/     # validateRequest, errorHandler, auth (JWT + roles)
- │   └── validators/      # Schemas express-validator por entidad
- ├── tests/               # Suite de pruebas E2E (npm test)
- ├── app.js               # Configuración del servidor Express
- ├── server.js            # Punto de entrada: sincroniza BD y escucha
- ├── .env.example
- └── .gitignore
-```
-
-### Endpoints principales
-
-| Método | Ruta | Acción | Auth |
-|---|---|---|---|
-| POST | `/api/v1/auth/productores/registro` | Registrar productor | — |
-| POST | `/api/v1/compradores/registro` | Registrar comprador | — |
-| POST | `/api/v1/auth/login` | Login (productor o comprador) | — |
-| GET | `/api/v1/productos` | Listar productos (filtro por `productor_id`, `en_stock`) | — |
-| POST | `/api/v1/productos` | Publicar producto | productor |
-| PATCH / DELETE | `/api/v1/productos/:id` | Editar / eliminar (soft) | productor dueño |
-| POST | `/api/v1/transacciones` | Crear pedido (pendiente) | comprador |
-| PATCH | `/api/v1/transacciones/:id/estado` | Confirmar (productor) / Entregar (comprador) | según rol |
-| GET/POST | `/api/v1/chats/productor/:id/comprador/:id` | Conversación / enviar mensaje con `precio_oferta` | participantes |
-| GET | `/api/v1/productores/:id/estadisticas` | Métricas del productor | token |
-| GET | `/api/v1/productores/:id/compradores` | Compradores conectados vía transacciones | token |
-
-### Instalación y puesta en marcha
+### 1. Backend
 
 ```bash
 cd backend
-cp .env.example .env      # completar credenciales de MySQL
 npm install
-npm run seed              # crea la BD, las tablas y datos demo
-npm run dev               # servidor en http://localhost:4000
-npm test                  # suite E2E (20 pruebas)
+cp .env.example .env   # opcional: los valores por defecto ya funcionan con SQLite
+npm run seed           # crea la base y carga datos demo
+npm start
 ```
 
-> En `server.js` la sincronización usa `sync({ alter: true })` en desarrollo. La base se crea automáticamente con el seed (`nodemon` no la crea).
+La API queda disponible en `http://localhost:4000/api/v1` y la salud en `http://localhost:4000/api/v1/salud`.
 
----
+> Ejecutá los comandos desde `backend/` porque la ruta de SQLite y la carpeta de uploads son relativas al directorio actual.
 
-## 🎨 FASE 3 · Frontend (HTML/CSS/JS vanilla + Bootstrap)
+### 2. Frontend
 
-### Estructura
-
-```
-frontend/
- ├── assets/
- │   ├── css/estilos.css   # estilos complementarios sobre Bootstrap
- │   └── js/               # app.js (sesión + API) y un módulo por página
- ├── index.html            # login
- ├── registro.html
- ├── inicio.html
- ├── productos.html
- ├── productores.html
- ├── compradores.html
- ├── transacciones.html
- ├── chats.html
- ├── 404.html
- ├── servidor.js           # servidor estático sin dependencias + proxy /api
- └── package.json
-```
-
-### Puesta en marcha
-
-Sin dependencias externas: el frontend usa Bootstrap 5 y Bootstrap Icons desde CDN, y un pequeño servidor Node estático (`servidor.js`) que además proxeé `/api` hacia el backend.
+En otra terminal:
 
 ```bash
 cd frontend
-npm start                 # app en http://localhost:5175 (proxy hacia el backend :4000)
+npm start
 ```
 
-### Funcionalidades de UX
+Abrí `http://localhost:5175`.
 
-- Formularios con validación y feedback claro (errores por campo + alertas Bootstrap).
-- Listados dinámicos, estados de carga y empty states.
-- Modales de creación/edición y confirmación de eliminación (Bootstrap 5).
-- Flujo completo de negociación: el comprador oferta un precio en el chat y crea el pedido; el productor lo confirma solo si el precio coincide con la oferta.
-- Protección de acceso: redirección automática a `/index.html` ante sesión expirada (token JWT en `localStorage`).
+El servidor del frontend expone los archivos estáticos y hace proxy de `/api/*` y `/uploads/*` hacia `http://localhost:4000`.
 
----
+## Credenciales demo
 
-## ✅ FASE 4 · Guía de prueba y checklist de evaluación
+Contraseña para todas las cuentas: `123456`.
 
-### Precondición
+| Rol | Email | Nombre |
+| --- | --- | --- |
+| Comercio | `juan@spotmarket.com` | Almacén Don Juan (minorista) |
+| Comercio | `maria@spotmarket.com` | Distribuidora María (mayorista) |
+| Comercio | `pedro@spotmarket.com` | Kiosco El Sol (minorista) |
+| Comercio | `carla@spotmarket.com` | Panadería La Espiga (minorista) |
+| Usuario | `vecino@spotmarket.com` | Sofía Ramírez |
+| Usuario | `resto@spotmarket.com` | Restaurante Sabores |
 
-1. MySQL activo (el proyecto fue probado con MySQL 8.4 en WAMP, puerto 3306).
-2. `backend/.env` con credenciales correctas.
-3. Backend en `:4000` y Frontend en `:5175` (`cd frontend && npm start`).
+## Reglas de acceso
 
-### Checklist funcional
+| Acción | Sin cuenta | Con cuenta |
+| --- | --- | --- |
+| Explorar comercios y productos | Sí | Sí |
+| Filtrar u ordenar por precio | No | Sí |
+| Ver locales cercanos | No | Sí |
+| Calificar comercio/producto | No | Sí (no el propio) |
+| Hacer pedidos | No | Solo usuarios |
+| Confirmar pedido | No | Solo el comercio dueño |
+| Marcar entregado | No | Solo el usuario comprador |
+| Chatear/negociar | No | Solo participantes |
+| Publicar/editar productos | No | Solo el comercio dueño |
+| Editar perfil | No | Solo el propio |
 
-| # | Criterio | Cómo comprobarlo |
-|---|---|---|
-| 1 | Registro de productor y comprador | Crear cuenta en `/registro`, elegir rol |
-| 2 | Login por rol | `/index.html` con `juan@productor.com` (productor) o `comprar@restaurante.com` (comprador), password `123456` |
-| 3 | Email único | Registrar un comprador con el email del productor → error 409 |
-| 4 | Publicar producto logueado como productor | Sección Productos → "+ Publicar producto" |
-| 5 | No publicar sin productor | `POST /productos` sin token → 401; sin rol productor → 403 |
-| 6 | Crear pedido (comprador) | Botón "Pedir" en un producto; cantidad ≤ stock y precio > 0 |
-| 7 | Stock insuficiente | Pedir más unidades que el stock → error del backend |
-| 8 | Confirmación validada en chat | El comprador oferta $X en `/chats`; el productor confirma el pedido de $X → OK. Confirmar con precio nunca ofertado → 400 |
-| 9 | Stock al confirmar | Ver que el stock del producto disminuye al confirmar |
-| 10 | Entrega | El comprador marca "entregado" sobre un pedido confirmado |
-| 11 | Soft delete | Eliminar un producto; no aparece en el listado pero sigue en BD con `deleted_at` |
-| 12 | Permisos | Un comprador no puede editar/eliminar productos ajenos (403) |
-| 13 | Errores semánticos | 200 OK · 201 creado · 400 validación · 401 no autenticado · 403 sin permiso · 404 no existe · 409 conflicto · 500 error interno |
+## Flujo rápido
 
-### Datos demo (seed)
+### Como comerciante
 
-| Rol | Email | Password |
-|---|---|---|
-| Productor | `juan@productor.com` | `123456` |
-| Productor | `maria@productor.com` | `123456` |
-| Comprador | `comprar@restaurante.com` | `123456` |
-| Comprador | `ventas@mayorista.com` | `123456` |
+1. Crear cuenta con “Soy comerciante”, completar datos del local, tipos de productos, ubicación (botón “Usar mi ubicación”) y fotos.
+2. Desde “Productos”, usar “Publicar producto” y cargar nombre, tipo, descripción, especificación, precio, oferta, stock e imagen.
+3. Recibir consultas en “Chats” y pedidos en “Pedidos”.
+4. Confirmar un pedido pendiente. Solo se confirma si el precio negociado coincide con una oferta enviada en el chat.
+5. Editar el perfil en “Comercios → Mi perfil”.
 
-### Pruebas automatizadas
+### Como usuario
+
+1. Crear cuenta como usuario o explorar el catálogo sin registrarse.
+2. Registrarse para usar “Cerca de mí”, filtros por precio y calificaciones.
+3. Pedir un producto desde “Productos” o negociar en “Chats”.
+4. Marcar como entregado un pedido confirmado por el comercio.
+5. Calificar comercios y productos desde “Comercios” y “Productos”.
+
+## API principal
+
+Base: `http://localhost:4000/api/v1`
+
+| Método | Ruta | Acceso |
+| --- | --- | --- |
+| GET | `/salud` | Público |
+| POST | `/auth/productores/registro` (`/auth/comercios/registro`) | Público |
+| POST | `/compradores/registro` | Público |
+| POST | `/auth/login` | Público |
+| GET | `/productores` | Público |
+| GET | `/productores/cercanos?lat=&lng=&radio=` | Autenticado |
+| GET | `/productores/:id` | Público |
+| PATCH/DELETE | `/productores/:id` | Dueño |
+| GET | `/productores/:id/calificaciones` | Público |
+| POST | `/productores/:id/calificaciones` | Autenticado |
+| GET | `/productores/:id/estadisticas` | Dueño |
+| GET | `/productos` | Público; precio/orden por precio requieren sesión |
+| GET | `/productos/:id` | Público |
+| POST/PATCH/DELETE | `/productos` · `/productos/:id` | Comercio dueño |
+| GET | `/productos/:id/calificaciones` | Público |
+| POST | `/productos/:id/calificaciones` | Autenticado |
+| GET | `/compradores` | Autenticado |
+| PATCH | `/compradores/:id` | Dueño |
+| GET | `/compradores/:id/productores` | Dueño |
+| GET | `/transacciones` | Autenticado (solo propias) |
+| POST | `/transacciones` | Usuario autenticado |
+| PATCH | `/transacciones/:id/estado` | Participante según estado |
+| GET | `/chats` | Autenticado (solo propios) |
+| GET/POST | `/chats/productor/:productor_id/comprador/:comprador_id` | Participantes |
+| POST | `/uploads` | Autenticado (`archivo` o `archivos`) |
+
+Las respuestas exitosas siguen el formato `{ ok, message, data?, ... }`. Los errores de validación devuelven `400` con `errors`.
+
+## Configuración
+
+Variables en `backend/.env` (ver `backend/.env.example`):
+
+| Variable | Default | Descripción |
+| --- | --- | --- |
+| `DB_DIALECT` | `sqlite` | `sqlite` o `mysql` |
+| `DB_STORAGE` | `./data/spotmarket.sqlite` | Archivo SQLite |
+| `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_HOST`, `DB_PORT` | — | Conexión MySQL |
+| `PORT` | `4000` | Puerto del backend |
+| `JWT_SECRET` | `secreto_dev` | Cambiar en producción |
+| `UPLOAD_DIR` | `./uploads` | Carpeta de imágenes |
+| `NODE_ENV` | `development` | Entorno |
+
+Para usar MySQL:
+
+```env
+DB_DIALECT=mysql
+DB_NAME=spot_market
+DB_USER=root
+DB_PASS=tu_password
+DB_HOST=127.0.0.1
+DB_PORT=3306
+```
+
+Luego ejecutá `npm run seed` para crear las tablas y cargar los datos demo.
+
+## Pruebas
 
 ```bash
 cd backend
-npm run seed     # estado limpio (opcional, el test reconstruye la BD)
-npm test         # 20 casos E2E sobre las reglas de negocio
+npm test
 ```
 
----
+Las pruebas levantan la app en el puerto `4100`, usan una base SQLite aislada (`./data/test-spotmarket.sqlite`) y una carpeta de uploads temporal, y al finalizar eliminan esos archivos. Cubren registro/login, gating por precio, locales cercanos, permisos, calificaciones, pedidos, chat, privacidad, subida de imágenes y borrado lógico.
 
-## 🔐 Seguridad
+## Estructura
 
-- Contraseñas con `bcryptjs` (hash de 10 rondas).
-- Autenticación JWT (8 h) con roles `productor` / `comprador`.
-- Middlewares `authenticate` + `authorize`.
-- Variables sensibles fuera del repositorio (`.env` en `.gitignore`).
+```text
+backend/
+  app.js, server.js
+  src/
+    config/        conexión, entorno y catálogos
+    models/        Productor, Comprador, Producto, Calificacion, Chat, Transaccion
+    controllers/   lógica de la API
+    routes/        endpoints
+    middlewares/   auth, uploads, validación y errores
+    validators/    reglas de entrada
+    utils/         geolocalización y resúmenes de calificaciones
+    seed.js        datos demo
+  tests/api.test.js
+frontend/
+  *.html
+  assets/css/estilos.css
+  assets/js/app.js y módulos por página
+  servidor.js      servidor estático + proxy
+```
+
+## Notas
+
+- El proyecto usa soft delete en comercios, productos, usuarios, transacciones y chats.
+- Las fotos demo del seed son URLs externas de `picsum.photos`.
+- En producción, cambiá `JWT_SECRET`, usá HTTPS y serví el frontend compilado/estático detrás de un proxy.
