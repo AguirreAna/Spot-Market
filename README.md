@@ -28,38 +28,45 @@ El catálogo se puede explorar sin cuenta. Para ver locales cercanos, filtrar u 
 
 - Backend: Node.js, Express, Sequelize, JWT, bcryptjs, multer.
 - Base de datos: SQLite por defecto (cero configuración) o MySQL opcional.
-- Frontend: HTML, CSS, JavaScript ES Modules y Bootstrap 5.3 vía CDN. Servidor de desarrollo propio con proxy hacia la API.
+- Frontend: HTML, CSS, JavaScript ES Modules y Bootstrap 5.3 vía CDN. El backend sirve el frontend, así que toda la aplicación funciona en un solo puerto. También incluye un servidor de desarrollo opcional con proxy.
 
 ## Puesta en marcha
 
 Requisitos: Node.js 18 o superior y npm.
 
-### 1. Backend
+Desde la raíz del proyecto:
 
 ```bash
-cd backend
-npm install
-cp .env.example .env   # opcional: los valores por defecto ya funcionan con SQLite
-npm run seed           # crea la base y carga datos demo
+npm run install:all   # instala dependencias del backend
+npm run seed          # crea la base y carga datos demo
 npm start
 ```
 
-La API queda disponible en `http://localhost:4000/api/v1` y la salud en `http://localhost:4000/api/v1/salud`.
+Abrí `http://localhost:4000`.
 
-> Ejecutá los comandos desde `backend/` porque la ruta de SQLite y la carpeta de uploads son relativas al directorio actual.
+El backend sirve tanto la aplicación web como la API:
 
-### 2. Frontend
+- App: `http://localhost:4000`
+- API: `http://localhost:4000/api/v1`
+- Salud: `http://localhost:4000/api/v1/salud`
+- Imágenes: `http://localhost:4000/uploads/...`
 
-En otra terminal:
+El archivo `.env` es opcional; los valores por defecto ya funcionan con SQLite. Si necesitás cambiarlos, copiá `backend/.env.example` a `backend/.env`.
+
+### Frontend en modo desarrollo (opcional)
+
+Si querés usar el servidor de desarrollo del frontend con recarga manual y proxy:
 
 ```bash
+# terminal 1, desde la raíz
+npm start
+
+# terminal 2
 cd frontend
 npm start
 ```
 
-Abrí `http://localhost:5175`.
-
-El servidor del frontend expone los archivos estáticos y hace proxy de `/api/*` y `/uploads/*` hacia `http://localhost:4000`.
+En ese caso abrí `http://localhost:5175`. El servidor de frontend hace proxy de `/api/*` y `/uploads/*` hacia `http://localhost:4000`.
 
 ## Credenciales demo
 
@@ -148,11 +155,12 @@ Variables en `backend/.env` (ver `backend/.env.example`):
 | Variable | Default | Descripción |
 | --- | --- | --- |
 | `DB_DIALECT` | `sqlite` | `sqlite` o `mysql` |
-| `DB_STORAGE` | `./data/spotmarket.sqlite` | Archivo SQLite |
+| `DB_STORAGE` | `backend/data/spotmarket.sqlite` | Archivo SQLite (las rutas relativas se resuelven desde `backend/`) |
 | `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_HOST`, `DB_PORT` | — | Conexión MySQL |
-| `PORT` | `4000` | Puerto del backend |
+| `PORT` | `4000` | Puerto del servidor |
 | `JWT_SECRET` | `secreto_dev` | Cambiar en producción |
-| `UPLOAD_DIR` | `./uploads` | Carpeta de imágenes |
+| `UPLOAD_DIR` | `backend/uploads` | Carpeta de imágenes |
+| `FRONTEND_DIR` | `frontend/` | Carpeta del frontend servida por Express |
 | `NODE_ENV` | `development` | Entorno |
 
 Para usar MySQL:
@@ -171,15 +179,15 @@ Luego ejecutá `npm run seed` para crear las tablas y cargar los datos demo.
 ## Pruebas
 
 ```bash
-cd backend
 npm test
 ```
 
-Las pruebas levantan la app en el puerto `4100`, usan una base SQLite aislada (`./data/test-spotmarket.sqlite`) y una carpeta de uploads temporal, y al finalizar eliminan esos archivos. Cubren registro/login, gating por precio, locales cercanos, permisos, calificaciones, pedidos, chat, privacidad, subida de imágenes y borrado lógico.
+Las pruebas levantan la app en el puerto `4100`, usan una base SQLite aislada (`backend/data/test-spotmarket.sqlite`) y una carpeta de uploads temporal, y al finalizar eliminan esos archivos. Cubren registro/login, gating por precio, locales cercanos, permisos, calificaciones, pedidos, chat, privacidad, subida de imágenes y borrado lógico.
 
 ## Estructura
 
 ```text
+package.json         scripts para iniciar, sembrar y probar desde la raíz
 backend/
   app.js, server.js
   src/

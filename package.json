@@ -1,0 +1,15 @@
+{
+  "name": "spot-market",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Spot Market - API y frontend de comercios de barrio",
+  "type": "module",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "seed": "npm --prefix backend run seed",
+    "test": "npm --prefix backend test",
+    "install:all": "npm --prefix backend install"
+  },
+  "license": "MIT"
+}

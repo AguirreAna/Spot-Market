@@ -22,8 +22,9 @@ const iniciarServidor = async () => {
   }
 
   app.listen(env.PORT, () => {
-    console.log(`Spot Market API corriendo en http://localhost:${env.PORT}`);
-    console.log(`Documentación de rutas: http://localhost:${env.PORT}/api/v1`);
+    console.log(`Spot Market disponible en http://localhost:${env.PORT}`);
+    console.log(`API: http://localhost:${env.PORT}/api/v1`);
+    console.log(`Frontend: http://localhost:${env.PORT}`);
   });
 };
 
