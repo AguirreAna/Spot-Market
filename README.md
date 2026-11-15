@@ -68,6 +68,17 @@ npm start
 
 En ese caso abrí `http://localhost:5175`. El servidor de frontend hace proxy de `/api/*` y `/uploads/*` hacia `http://localhost:4000`.
 
+### Abrir y ejecutar desde VS Code
+
+El proyecto está preparado para VS Code:
+
+1. Abrí la carpeta completa del proyecto (`spot-market`), no solo un archivo ni la carpeta personal.
+2. La primera vez, ejecutá las tareas `1. Instalar dependencias` y `2. Cargar datos demo` desde `Terminal → Run Task`.
+3. Presioná `F5` y elegí `Spot Market (servidor + frontend)`.
+4. Abrí `http://localhost:4000`.
+
+La configuración está en `.vscode/launch.json`, `.vscode/tasks.json` y `.vscode/settings.json`. Si aparece `EADDRINUSE`, ya hay otro servidor usando el puerto 4000: cerralo o detené la terminal anterior antes de presionar `F5`.
+
 ## Credenciales demo
 
 Contraseña para todas las cuentas: `123456`.
