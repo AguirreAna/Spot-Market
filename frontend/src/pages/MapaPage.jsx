@@ -4,14 +4,25 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { api } from '../services/api.js';
+import LogoNavbar from '../assets/LogoNavbar.svg';
 
-const icono = new L.Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
+function crearIconoComercio(nombre) {
+  return L.divIcon({
+    className: 'custom-spotmarket-pin',
+    html: `
+      <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: auto;">
+        <div style="background: rgba(10, 20, 40, 0.95); color: #f4f7ff; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; border: 1.5px solid #ffc72c; box-shadow: 0 4px 12px rgba(0,0,0,0.7); white-space: nowrap; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+          <span style="color: #ffc72c;">●</span> ${nombre}
+        </div>
+        <div style="width: 32px; height: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));">
+          <img src="${LogoNavbar}" style="width: 100%; height: 100%; object-fit: contain;" alt="${nombre}" />
+        </div>
+      </div>
+    `,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0]
+  });
+}
 
 const FORMOSA = [-26.1849, -58.1731];
 
@@ -48,34 +59,34 @@ export default function MapaPage() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 text-white">
+    <div className="max-w-6xl mx-auto px-4 py-8 text-blanco">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Comercios en Formosa Capital</h1>
-          <p className="text-gray-400 mt-1">{info}</p>
+          <h1 className="text-3xl font-bold text-blanco">Comercios en Formosa Capital</h1>
+          <p className="text-gris-azulado mt-1 text-sm">{info}</p>
         </div>
         <button
           type="button"
           onClick={() => setExpandido(true)}
-          className="self-start sm:self-auto bg-[#FFB800] hover:bg-yellow-400 text-black font-extrabold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg"
+          className="self-start sm:self-auto fondo-dorado text-negro font-extrabold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg hover:brightness-110"
         >
           <span>⛶</span> Agrandar pantalla completa
         </button>
       </div>
 
-      <div className="mt-6 rounded-2xl overflow-hidden border border-white/10 shadow-2xl relative" style={{ height: 520 }}>
+      <div className="mt-6 rounded-2xl overflow-hidden border border-borde shadow-2xl relative" style={{ height: 520 }}>
         <MapContainer center={FORMOSA} zoom={13} style={{ height: '100%', width: '100%' }}>
-          <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <TileLayer attribution='&copy; OpenStreetMap' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {comercios
             .filter((c) => c.latitud && c.longitud)
             .map((c) => (
-              <Marker key={c.id} position={[parseFloat(c.latitud), parseFloat(c.longitud)]} icon={icono}>
-                <Popup className="spot-popup">
-                  <div className="p-1 text-black">
-                    <p className="font-bold text-sm text-red-600">{c.nombre_local}</p>
-                    <p className="text-xs text-gray-700 font-semibold uppercase">{c.tipo_comercio || 'Minorista'}</p>
-                    <p className="text-xs text-gray-800 mt-1">{c.direccion}</p>
-                    {c.distancia != null && <p className="text-xs text-blue-600 font-medium mt-1">A {c.distancia} km</p>}
+              <Marker key={c.id} position={[parseFloat(c.latitud), parseFloat(c.longitud)]} icon={crearIconoComercio(c.nombre_local)}>
+                <Popup>
+                  <div className="p-1 text-blanco">
+                    <p className="font-bold text-sm text-amarillo">{c.nombre_local}</p>
+                    <p className="text-xs text-gris-azulado font-semibold uppercase">{c.tipo_comercio || 'Minorista'}</p>
+                    <p className="text-xs text-blanco mt-1">{c.direccion}</p>
+                    {c.distancia != null && <p className="text-xs text-azul font-medium mt-1">A {c.distancia} km</p>}
                   </div>
                 </Popup>
               </Marker>
@@ -85,37 +96,37 @@ export default function MapaPage() {
 
       {/* MODAL FULL-SCREEN: MAPA EXPANDIDO */}
       {expandido && (
-        <div className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur flex flex-col p-4 sm:p-6">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="fixed inset-0 z-[1000] bg-negro/95 backdrop-blur flex flex-col p-4 sm:p-6">
+          <div className="flex items-center justify-between pb-3 border-b border-borde">
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-blanco flex items-center gap-2">
                 Mapa de Formosa Capital — Pantalla Completa
               </h2>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gris-azulado">
                 Mostrando todos los comercios barriales registrados.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setExpandido(false)}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow"
+              className="bg-rojo hover:brightness-110 text-blanco px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg flex items-center gap-1.5"
             >
-              <span>✕</span> Reducir Pantalla
+              <span>✕</span> Salir de pantalla completa
             </button>
           </div>
-          <div className="flex-1 mt-3 rounded-2xl overflow-hidden border border-white/20">
+          <div className="flex-1 mt-3 rounded-2xl overflow-hidden border border-borde relative">
             <MapContainer center={FORMOSA} zoom={14} style={{ height: '100%', width: '100%' }}>
-              <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <TileLayer attribution='&copy; OpenStreetMap' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
               {comercios
                 .filter((c) => c.latitud && c.longitud)
                 .map((c) => (
-                  <Marker key={c.id} position={[parseFloat(c.latitud), parseFloat(c.longitud)]} icon={icono}>
-                    <Popup className="spot-popup">
-                      <div className="p-1 text-black">
-                        <p className="font-bold text-sm text-red-600">{c.nombre_local}</p>
-                        <p className="text-xs text-gray-700 font-semibold uppercase">{c.tipo_comercio || 'Minorista'}</p>
-                        <p className="text-xs text-gray-800 mt-1">{c.direccion}</p>
-                        {c.distancia != null && <p className="text-xs text-blue-600 font-medium mt-1">A {c.distancia} km</p>}
+                  <Marker key={c.id} position={[parseFloat(c.latitud), parseFloat(c.longitud)]} icon={crearIconoComercio(c.nombre_local)}>
+                    <Popup>
+                      <div className="p-1 text-blanco">
+                        <p className="font-bold text-sm text-amarillo">{c.nombre_local}</p>
+                        <p className="text-xs text-gris-azulado font-semibold uppercase">{c.tipo_comercio || 'Minorista'}</p>
+                        <p className="text-xs text-blanco mt-1">{c.direccion}</p>
+                        {c.distancia != null && <p className="text-xs text-azul font-medium mt-1">A {c.distancia} km</p>}
                       </div>
                     </Popup>
                   </Marker>

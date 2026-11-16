@@ -427,64 +427,57 @@ function ProductosTab({ productos, onActualizar }) {
   };
 
   const filtrados = productos.filter((p) => {
-    const coincideTxt = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
-    const coincideCat = categoriaFiltro ? p.categoria === categoriaFiltro : true;
-    return coincideTxt && coincideCat;
+    const q = busqueda.toLowerCase().trim();
+    if (!q) return true;
+    const matchNombre = p.nombre ? p.nombre.toLowerCase().includes(q) : false;
+    const matchCat = p.categoria ? p.categoria.toLowerCase().includes(q) : false;
+    return matchNombre || matchCat;
   });
 
   return (
     <div className="mt-6 space-y-6">
-      {/* BARRA SUPERIOR DE ACCIONES */}
+      {/* BARRA SUPERIOR: BUSCADOR DE PRODUCTOS (REEMPLAZA EL DESPLEGABLE) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 max-w-md">
           <input
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar en mi catálogo..."
-            className="rounded-xl bg-[#111A2E] border border-white/10 px-3.5 py-2 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-[#FFB800]"
+            placeholder="Buscar por nombre o categoría de producto..."
+            className="w-full rounded-xl bg-negro/70 border border-borde px-4 py-2.5 pl-10 text-xs text-blanco placeholder:text-gris-azulado focus:outline-none focus:border-amarillo transition shadow-sm"
           />
-          <select
-            value={categoriaFiltro}
-            onChange={(e) => setCategoriaFiltro(e.target.value)}
-            className="rounded-xl bg-[#111A2E] border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-[#FFB800]"
-          >
-            <option value="">Todas las categorías</option>
-            {CATEGORIAS_PRODUCTOS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <svg className="w-4 h-4 text-gris-azulado absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
 
         <button
           onClick={abrirCrear}
-          className="bg-[#FFB800] hover:bg-yellow-400 text-black font-extrabold px-5 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center gap-2 self-start sm:self-auto"
+          className="fondo-dorado text-negro font-extrabold px-5 py-2.5 rounded-xl text-xs transition shadow-lg hover:brightness-110 flex items-center gap-2 self-start sm:self-auto"
         >
           <span>＋</span> Nuevo Producto
         </button>
       </div>
 
-      {/* TABLA DE PRODUCTOS */}
-      <div className="rounded-2xl bg-[#111A2E] border border-white/10 overflow-hidden shadow-xl">
+      {/* TABLA DE PRODUCTOS (SIN PRECIO DE OFERTA, CON ÚLTIMA MODIFICACIÓN) */}
+      <div className="rounded-2xl bg-gris-oscuro border border-borde overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-black/30 border-b border-white/10 text-gray-400 font-bold uppercase tracking-wider">
+            <thead className="bg-black/30 border-b border-borde text-gris-azulado font-bold uppercase tracking-wider">
               <tr>
                 <th className="px-5 py-3.5">Producto</th>
                 <th className="px-5 py-3.5">Categoría</th>
                 <th className="px-5 py-3.5">Precio Regular</th>
-                <th className="px-5 py-3.5">Precio Oferta</th>
+                <th className="px-5 py-3.5">Última Modificación</th>
                 <th className="px-5 py-3.5">Cuotas</th>
                 <th className="px-5 py-3.5 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-borde/40">
               {filtrados.map((p) => (
                 <tr key={p.id} className="hover:bg-white/[0.02] transition">
-                  <td className="px-5 py-3.5 font-bold text-white flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <td className="px-5 py-3.5 font-bold text-blanco flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-negro/60 border border-borde overflow-hidden flex items-center justify-center flex-shrink-0">
                       {p.imagen_url ? (
                         <img src={resolverUrlImagen(p.imagen_url)} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -492,32 +485,39 @@ function ProductosTab({ productos, onActualizar }) {
                       )}
                     </div>
                     <div>
-                      <p className="truncate max-w-xs">{p.nombre}</p>
-                      <p className="text-[10px] text-gray-400 font-normal">{p.vistas || 0} vistas comunitarias</p>
+                      <p className="truncate max-w-xs text-blanco font-semibold">{p.nombre}</p>
+                      <p className="text-[10px] text-gris-azulado font-normal">{p.vistas || 0} vistas comunitarias</p>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-300">
-                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[11px]">
+                  <td className="px-5 py-3.5 text-gris-azulado">
+                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-borde text-[11px] text-blanco">
                       {p.categoria || 'Almacén'}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 font-bold text-white">
+                  <td className="px-5 py-3.5 font-bold text-blanco">
                     ${Number(p.precio).toLocaleString('es-AR')}
                   </td>
-                  <td className="px-5 py-3.5 font-bold text-[#EF4444]">
-                    {p.precio_oferta ? `$${Number(p.precio_oferta).toLocaleString('es-AR')}` : '—'}
+                  <td className="px-5 py-3.5 text-blanco whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-blanco">
+                        {p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Reciente'}
+                      </span>
+                      <span className="text-[10px] text-gris-azulado">
+                        {p.updatedAt ? new Date(p.updatedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs' : ''}
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-5 py-3.5 text-emerald-400 font-semibold">{p.cuotas || 'Contado'}</td>
+                  <td className="px-5 py-3.5 text-verde font-semibold">{p.cuotas || 'Contado'}</td>
                   <td className="px-5 py-3.5 text-right space-x-2">
                     <button
                       onClick={() => abrirEditar(p)}
-                      className="px-3 py-1 rounded-lg text-xs font-bold text-[#FFB800] bg-[#FFB800]/10 hover:bg-[#FFB800]/20 border border-[#FFB800]/20"
+                      className="px-3 py-1 rounded-lg text-xs font-bold text-amarillo bg-amarillo/10 hover:bg-amarillo/20 border border-amarillo/20 transition"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => eliminarProducto(p)}
-                      className="px-3 py-1 rounded-lg text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20"
+                      className="px-3 py-1 rounded-lg text-xs font-bold text-rojo bg-rojo/10 hover:bg-rojo/20 border border-rojo/20 transition"
                     >
                       Eliminar
                     </button>
@@ -526,7 +526,7 @@ function ProductosTab({ productos, onActualizar }) {
               ))}
               {filtrados.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="text-center py-10 text-gray-400">
+                  <td colSpan="6" className="text-center py-10 text-gris-azulado">
                     No hay productos para mostrar en este criterio.
                   </td>
                 </tr>
@@ -965,6 +965,23 @@ function PerfilTab({ comercio, onActualizar }) {
   const [nuevasFotos, setNuevasFotos] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
+  const [fotoModal, setFotoModal] = useState(null);
+  const [eliminandoFotoId, setEliminandoFotoId] = useState(null);
+
+  const handleEliminarFoto = async (fotoId) => {
+    if (!confirm('¿Seguro que deseás eliminar esta foto del local?')) return;
+    setEliminandoFotoId(fotoId);
+    try {
+      await api(`/comercios/fotos/${fotoId}`, { method: 'DELETE' });
+      if (fotoModal?.id === fotoId) setFotoModal(null);
+      setMensaje('Foto eliminada correctamente.');
+      onActualizar();
+    } catch (err) {
+      alert(`Error al eliminar foto: ${err.message}`);
+    } finally {
+      setEliminandoFotoId(null);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -998,10 +1015,52 @@ function PerfilTab({ comercio, onActualizar }) {
   };
 
   return (
-    <div className="mt-6 max-w-3xl bg-[#111A2E] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+    <div className="mt-6 max-w-3xl bg-gris-oscuro border border-borde rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+      {/* Lightbox / Modal para visualizar foto ampliada */}
+      {fotoModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setFotoModal(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full bg-gris-oscuro border border-borde rounded-2xl p-4 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-borde mb-3">
+              <h4 className="text-sm font-bold text-blanco">Fotografía del Local Comercial</h4>
+              <button
+                onClick={() => setFotoModal(null)}
+                className="text-gris-azulado hover:text-blanco font-bold text-sm px-2 py-1 rounded"
+              >
+                ✕ Cerrar
+              </button>
+            </div>
+            <div className="w-full max-h-[70vh] flex items-center justify-center overflow-hidden rounded-xl bg-black">
+              <img
+                src={resolverUrlImagen(fotoModal.url)}
+                alt="Foto ampliada"
+                className="max-w-full max-h-[70vh] object-contain"
+              />
+            </div>
+            <div className="mt-3 flex justify-between items-center text-xs">
+              <span className="text-gris-azulado">SpotMarket Formosa</span>
+              {fotoModal.id && (
+                <button
+                  type="button"
+                  onClick={() => handleEliminarFoto(fotoModal.id)}
+                  className="px-3 py-1.5 rounded-lg bg-rojo/20 text-rojo border border-rojo/30 hover:bg-rojo/30 font-semibold transition"
+                >
+                  🗑️ Eliminar esta fotografía
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
-        <h3 className="font-bold text-base text-white">Canales de Contacto y Perfil Comercial</h3>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <h3 className="font-bold text-base text-blanco">Canales de Contacto y Perfil Comercial</h3>
+        <p className="text-xs text-gris-azulado mt-0.5">
           Los vecinos verán estos datos para ubicar tu negocio y enviarte mensajes.
         </p>
       </div>
@@ -1014,23 +1073,23 @@ function PerfilTab({ comercio, onActualizar }) {
 
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         <div>
-          <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">Nombre Comercial del Local</label>
+          <label className="block text-[11px] font-bold uppercase text-gris-azulado mb-1">Nombre Comercial del Local</label>
           <input
             type="text"
             value={form.nombre_local}
             onChange={(e) => setForm({ ...form, nombre_local: e.target.value })}
             required
-            className="w-full rounded-xl bg-[#070C16] border border-white/10 px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-[#FFB800]"
+            className="w-full rounded-xl bg-negro/70 border border-borde px-3.5 py-2.5 text-blanco text-xs focus:outline-none focus:border-amarillo"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-bold uppercase text-[#FFB800] mb-1">Tipo de Comercio</label>
+            <label className="block text-[11px] font-bold uppercase text-amarillo mb-1">Tipo de Comercio</label>
             <select
               value={form.tipo_comercio}
               onChange={(e) => setForm({ ...form, tipo_comercio: e.target.value })}
-              className="w-full rounded-xl bg-[#070C16] border border-white/10 px-3.5 py-2.5 text-white text-xs font-medium focus:outline-none focus:border-[#FFB800]"
+              className="w-full rounded-xl bg-negro/70 border border-borde px-3.5 py-2.5 text-blanco text-xs font-medium focus:outline-none focus:border-amarillo"
             >
               {TIPOS_COMERCIO.map((t) => (
                 <option key={t} value={t}>
@@ -1040,20 +1099,20 @@ function PerfilTab({ comercio, onActualizar }) {
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">Teléfono Directo</label>
+            <label className="block text-[11px] font-bold uppercase text-gris-azulado mb-1">Teléfono Directo</label>
             <input
               type="text"
               value={form.telefono}
               onChange={(e) => setForm({ ...form, telefono: e.target.value })}
               placeholder="3704-XXXXXX"
-              className="w-full rounded-xl bg-[#070C16] border border-white/10 px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-[#FFB800]"
+              className="w-full rounded-xl bg-negro/70 border border-borde px-3.5 py-2.5 text-blanco text-xs focus:outline-none focus:border-amarillo"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-bold uppercase text-emerald-400 mb-1">
+            <label className="block text-[11px] font-bold uppercase text-verde mb-1">
               WhatsApp Comercial (para pedidos y consultas)
             </label>
             <input
@@ -1061,11 +1120,11 @@ function PerfilTab({ comercio, onActualizar }) {
               value={form.whatsapp}
               onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
               placeholder="3704123456"
-              className="w-full rounded-xl bg-[#070C16] border border-white/10 px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-emerald-400"
+              className="w-full rounded-xl bg-negro/70 border border-borde px-3.5 py-2.5 text-blanco text-xs focus:outline-none focus:border-verde"
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">
+            <label className="block text-[11px] font-bold uppercase text-gris-azulado mb-1">
               Horario de Atención al Público
             </label>
             <input
@@ -1073,29 +1132,29 @@ function PerfilTab({ comercio, onActualizar }) {
               value={form.horario_atencion}
               onChange={(e) => setForm({ ...form, horario_atencion: e.target.value })}
               placeholder="Ej: Lun a Sáb 8:00 - 13:00 / 17:00 - 21:00"
-              className="w-full rounded-xl bg-[#070C16] border border-white/10 px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-[#FFB800]"
+              className="w-full rounded-xl bg-negro/70 border border-borde px-3.5 py-2.5 text-blanco text-xs focus:outline-none focus:border-amarillo"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">Dirección en Formosa Capital</label>
+          <label className="block text-[11px] font-bold uppercase text-gris-azulado mb-1">Dirección en Formosa Capital</label>
           <input
             type="text"
             value={form.direccion}
             onChange={(e) => setForm({ ...form, direccion: e.target.value })}
             required
-            className="w-full rounded-xl bg-[#070C16] border border-white/10 px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-[#FFB800]"
+            className="w-full rounded-xl bg-negro/70 border border-borde px-3.5 py-2.5 text-blanco text-xs focus:outline-none focus:border-amarillo"
           />
         </div>
 
-        {/* ── FOTOGRAFÍAS DEL COMERCIO CARGADAS AL REGISTRARSE ── */}
-        <div className="pt-4 border-t border-white/10 space-y-3">
+        {/* ── FOTOGRAFÍAS DEL COMERCIO: VISUALIZAR, ELIMINAR Y AGREGAR NUEVAS ── */}
+        <div className="pt-4 border-t border-borde space-y-3">
           <div className="flex items-center justify-between">
-            <label className="block text-[11px] font-bold uppercase text-[#FFB800]">
+            <label className="block text-[11px] font-bold uppercase text-amarillo">
               📸 Fotografías del Local Comercial ({comercio?.fotos?.length || 0})
             </label>
-            <span className="text-[10px] text-gray-400">Fotos de fachada subidas al registrarse</span>
+            <span className="text-[10px] text-gris-azulado">Hacé clic en cualquier foto para verla ampliada o eliminarla</span>
           </div>
 
           {comercio?.fotos && comercio.fotos.length > 0 ? (
@@ -1103,27 +1162,44 @@ function PerfilTab({ comercio, onActualizar }) {
               {comercio.fotos.map((f, idx) => (
                 <div
                   key={f.id || idx}
-                  className="relative group rounded-xl overflow-hidden border border-white/15 bg-black/40 aspect-square shadow hover:border-[#FFB800] transition-colors"
+                  onClick={() => setFotoModal(f)}
+                  className="relative group rounded-xl overflow-hidden border border-borde bg-negro/60 aspect-square shadow hover:border-amarillo transition cursor-pointer"
                 >
                   <img
                     src={resolverUrlImagen(f.url)}
                     alt={`Fachada ${idx + 1}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
-                  <span className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-[9px] px-2 py-0.5 rounded font-bold">
+                  <span className="absolute bottom-1.5 left-1.5 bg-black/80 text-blanco text-[9px] px-2 py-0.5 rounded font-bold">
                     Foto #{idx + 1}
                   </span>
+                  {f.id && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEliminarFoto(f.id);
+                      }}
+                      disabled={eliminandoFotoId === f.id}
+                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-rojo text-blanco opacity-90 hover:opacity-100 hover:scale-110 shadow transition"
+                      title="Eliminar foto"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-500 italic bg-black/20 p-3 rounded-xl border border-white/5">
+            <p className="text-xs text-gris-azulado italic bg-negro/40 p-3 rounded-xl border border-borde">
               Aún no tenés fotos de fachada registradas. Podés agregar fotos a continuación.
             </p>
           )}
 
           <div>
-            <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">
+            <label className="block text-[11px] font-bold uppercase text-gris-azulado mb-1">
               Subir más fotos de fachada o local
             </label>
             <input
@@ -1131,10 +1207,10 @@ function PerfilTab({ comercio, onActualizar }) {
               multiple
               accept="image/*"
               onChange={(e) => setNuevasFotos(Array.from(e.target.files || []))}
-              className="w-full text-xs text-gray-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FFB800] file:text-black hover:file:bg-yellow-400 cursor-pointer"
+              className="w-full text-xs text-gris-azulado file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:fondo-dorado file:text-negro hover:file:brightness-110 cursor-pointer"
             />
             {nuevasFotos.length > 0 && (
-              <p className="text-[10px] text-emerald-400 mt-1 font-semibold">
+              <p className="text-[10px] text-verde mt-1 font-semibold">
                 ✓ {nuevasFotos.length} nueva(s) foto(s) lista(s) para subir al guardar.
               </p>
             )}
@@ -1144,7 +1220,7 @@ function PerfilTab({ comercio, onActualizar }) {
         <button
           type="submit"
           disabled={cargando}
-          className="bg-[#FFB800] hover:bg-yellow-400 text-black font-extrabold text-xs px-6 py-3 rounded-xl transition shadow-lg disabled:opacity-50"
+          className="fondo-dorado text-negro font-extrabold text-xs px-6 py-3 rounded-xl transition shadow-lg hover:brightness-110 disabled:opacity-50"
         >
           {cargando ? 'Guardando...' : 'Guardar Información Comercial'}
         </button>

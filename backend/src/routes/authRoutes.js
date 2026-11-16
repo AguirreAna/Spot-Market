@@ -5,7 +5,8 @@ import {
   registrarComercio,
   login,
   logout,
-  me
+  me,
+  recuperarPassword
 } from '../controllers/authController.js';
 import { validarRegistro, validarRegistroComercio, validarLogin } from '../validators/authValidator.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
@@ -27,6 +28,7 @@ router.post(
 );
 
 router.post('/login', validarLogin, validateRequest, login);
+router.post('/recuperar-password', recuperarPassword);
 router.post('/logout', verificarToken, logout);
 router.get('/me', verificarToken, me);
 

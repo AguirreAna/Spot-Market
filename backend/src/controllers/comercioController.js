@@ -133,6 +133,24 @@ export const actualizarComercio = async (req, res, next) => {
   }
 };
 
+export const eliminarFotoComercio = async (req, res, next) => {
+  try {
+    const { fotoId } = req.params;
+    const foto = await FotoComercio.findByPk(fotoId);
+    if (!foto) {
+      return res.status(404).json({ ok: false, mensaje: 'Foto no encontrada.' });
+    }
+    const comercio = await Comercio.findByPk(foto.comercioId);
+    if (!comercio || comercio.usuarioId !== req.usuario.id) {
+      return res.status(403).json({ ok: false, mensaje: 'No podés eliminar fotos de este comercio.' });
+    }
+    await foto.destroy();
+    return res.json({ ok: true, mensaje: 'Foto eliminada correctamente.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const masBuscados = async (req, res, next) => {
   try {
     const comercio = await Comercio.findOne({ where: { usuarioId: req.usuario.id } });

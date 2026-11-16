@@ -1,11 +1,8 @@
-// Navbar principal de SpotMarket con paleta oscura de alto contraste.
-// Soporta logo oficial, menú de 27 categorías A-Z reactivo, buscador rápido y estado de sesión.
-// Diferencia la barra si el usuario es comerciante o vecino/consumidor.
+// Navbar oficial SpotMarket — Estilo, tipografía (Lobster / Inter) y colores inspirados en Daiana45/proyect
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import LogoNavbar from '../assets/LogoNavbar.svg';
-import LogoCompleto from '../assets/Logo.svg';
 import { CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
 
 export default function Navbar() {
@@ -14,6 +11,7 @@ export default function Navbar() {
   const [menuCatAbierto, setMenuCatAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const menuRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Cerrar menú al hacer clic afuera
   useEffect(() => {
@@ -24,6 +22,18 @@ export default function Navbar() {
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Atajo Ctrl + K para enfocar el buscador
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const handleBuscar = (e) => {
@@ -47,69 +57,46 @@ export default function Navbar() {
   const esComerciante = usuario?.rol === 'comerciante';
 
   return (
-    <header className="bg-[#0B111E] border-b border-white/10 sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-negro/90 backdrop-blur-md transition-all duration-300">
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:px-8 justify-between">
         {/* Logo oficial SpotMarket */}
-        <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-          <div className="h-10 w-10 rounded-xl bg-[#0B1220] border border-white/10 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform overflow-hidden shadow">
-            <img src={LogoCompleto} alt="Spot Market" className="w-full h-full object-contain" />
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-baseline font-black tracking-tight text-xl leading-none">
-              <span className="text-white">Spot</span>
-              <span className="text-[#FFB800] ml-0.5">Market</span>
-            </div>
-            <span className="text-[9px] tracking-widest text-gray-400 uppercase font-semibold">Ofertas cerca tuyo</span>
-          </div>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/" aria-label="SpotMarket - Inicio" className="shrink-0 flex items-center gap-2">
+            <img src={LogoNavbar} alt="" className="h-10 w-10 shrink-0 object-contain" />
+            <span className="font-marca text-2xl text-blanco tracking-wide">
+              Spot<span className="text-amarillo">Market</span>
+            </span>
+          </Link>
 
-        {/* SI ES COMERCIANTE: BARRA DEDICADA DE GESTIÓN */}
-        {esComerciante ? (
-          <nav className="hidden md:flex items-center gap-2">
-            <Link
-              to="/panel"
-              className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FFB800] text-black shadow hover:bg-yellow-400 transition"
-            >
-              📊 Mi Panel Comerciante
-            </Link>
-            <Link
-              to="/mapa"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition"
-            >
-              Ver en Mapa
-            </Link>
-          </nav>
-        ) : (
-          /* SI ES CLIENTE/PÚBLICO: DESPLEGABLE DE 27 CATEGORÍAS */
+          {/* Botón de Categorías con icono cuadriculado */}
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setMenuCatAbierto(!menuCatAbierto)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+              type="button"
+              onClick={() => setMenuCatAbierto((prev) => !prev)}
+              aria-expanded={menuCatAbierto}
+              className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition active:scale-95 ${
+                menuCatAbierto ? 'border-amarillo text-amarillo' : 'border-borde text-blanco hover:border-gris-azulado'
+              }`}
             >
-              <svg className="w-4 h-4 text-[#FFB800]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
               </svg>
-              <span>Categorías</span>
-              <svg
-                className={`w-3.5 h-3.5 transition-transform ${menuCatAbierto ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
+              <span className="hidden sm:inline">Categorías</span>
             </button>
 
             {menuCatAbierto && (
-              <div className="absolute left-0 mt-2 w-64 rounded-xl bg-[#111A2E] border border-white/15 shadow-2xl py-2 z-50">
-                <div className="px-3 py-1 text-xs font-bold text-[#FFB800] uppercase tracking-wider border-b border-white/5 mb-1 flex items-center justify-between">
+              <div className="absolute left-0 mt-2 w-72 rounded-xl bg-gris-oscuro border border-borde shadow-2xl py-2 z-50">
+                <div className="px-4 py-2 text-xs font-bold text-amarillo uppercase tracking-wider border-b border-borde/60 flex items-center justify-between">
                   <span>Categorías A-Z</span>
-                  <span className="text-[10px] text-gray-400">27 rubros</span>
+                  <span className="text-[10px] text-gris-azulado">27 rubros</span>
                 </div>
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-80 overflow-y-auto divide-y divide-borde/30">
                   <button
                     onClick={() => seleccionarCategoria('Todas')}
-                    className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#FFB800] hover:text-black font-bold transition-colors border-b border-white/5"
+                    className="w-full text-left px-4 py-2 text-xs text-blanco hover:bg-amarillo hover:text-negro font-bold transition-colors"
                   >
                     ★ Ver Todo el Catálogo
                   </button>
@@ -117,7 +104,7 @@ export default function Navbar() {
                     <button
                       key={cat}
                       onClick={() => seleccionarCategoria(cat)}
-                      className="w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-[#FFB800] hover:text-black font-medium transition-colors"
+                      className="w-full text-left px-4 py-2 text-xs text-gris-azulado hover:text-blanco hover:bg-negro/50 transition-colors"
                     >
                       {cat}
                     </button>
@@ -126,63 +113,73 @@ export default function Navbar() {
               </div>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Buscador de productos central */}
-        <form onSubmit={handleBuscar} className="flex-1 max-w-md hidden sm:block">
-          <div className="relative">
-            <input
-              type="text"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar productos o comercios en Formosa..."
-              className="w-full rounded-full bg-white/5 border border-white/15 px-4 py-1.5 pl-10 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-[#FFB800] transition"
-            />
-            <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 1114 0z"
-                />
-              </svg>
-            </button>
-          </div>
-        </form>
-
-        {/* Sesión y Accesos directos */}
-        <div className="flex items-center gap-3">
-          {usuario ? (
-            <div className="flex items-center gap-2.5">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-white truncate max-w-[140px]">
-                  {usuario.nombre_local || usuario.nombre}
-                </p>
-                <p className="text-[10px] text-[#FFB800] font-semibold uppercase">
-                  {esComerciante ? '🏪 Local' : '👤 Vecino'}
-                </p>
-              </div>
+        {/* Buscador central idéntico a Daiana45/proyect */}
+        <div className="relative w-40 sm:w-60 md:w-80 lg:w-96 shrink-0">
+          <form onSubmit={handleBuscar} role="search">
+            <div className="relative flex items-center rounded-xl border border-borde bg-gris-oscuro py-1.5 pl-3.5 pr-2 transition-colors hover:border-blanco">
+              <input
+                ref={inputRef}
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar productos o comercios..."
+                className="min-w-0 flex-1 bg-transparent pr-16 text-xs text-blanco placeholder:text-gris-azulado focus:outline-none"
+              />
+              <kbd aria-hidden="true" className="pointer-events-none absolute right-9 top-1/2 -translate-y-1/2 rounded border border-borde bg-negro px-1.5 py-0.5 text-[10px] text-gris-azulado hidden sm:inline">
+                Ctrl K
+              </kbd>
               <button
-                onClick={logout}
-                className="text-xs font-semibold text-gray-300 hover:text-red-400 bg-white/5 hover:bg-red-500/10 border border-white/10 px-3 py-1.5 rounded-lg transition"
+                type="submit"
+                aria-label="Ejecutar búsqueda"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 cursor-pointer text-rojo transition hover:scale-110"
               >
-                Salir
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Sesión y Navegación Derecha */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {usuario ? (
+            <div className="flex items-center gap-2 sm:gap-3">
+              {esComerciante && (
+                <Link
+                  to="/panel"
+                  className="hidden md:inline-flex px-3 py-1.5 rounded-md text-xs font-bold fondo-dorado text-negro shadow hover:brightness-110 transition"
+                >
+                  📊 Mi Panel
+                </Link>
+              )}
+              <span className="hidden sm:inline text-xs text-gris-azulado max-w-[140px] truncate">
+                Hola, <strong className="text-blanco">{usuario.nombre_local || usuario.nombre}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={logout}
+                className="shrink-0 cursor-pointer rounded-br-2xl border border-borde px-3.5 py-1.5 text-xs font-semibold text-gris-azulado hover:text-blanco hover:border-blanco transition"
+              >
+                Cerrar sesión
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="text-xs font-semibold text-gray-200 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition"
+                className="shrink-0 rounded-br-2xl border border-borde px-3.5 py-1.5 text-xs font-semibold text-blanco hover:border-blanco transition"
               >
                 Iniciar sesión
               </Link>
               <Link
                 to="/registro-comercio"
-                className="text-xs font-bold bg-[#FFB800] hover:bg-yellow-400 text-black px-3.5 py-1.5 rounded-lg shadow transition"
+                className="shrink-0 rounded-xs fondo-dorado px-3.5 py-1.5 text-xs font-semibold text-negro transition hover:brightness-110"
               >
-                Registrar local
+                Registrarse
               </Link>
             </div>
           )}

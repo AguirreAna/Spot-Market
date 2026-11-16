@@ -123,21 +123,21 @@ export default function Inicio() {
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 {comercios.map((com) => {
                   const lat = parseFloat(com.latitud) || -26.185;
                   const lng = parseFloat(com.longitud) || -58.175;
                   return (
                     <Marker key={com.id} position={[lat, lng]} icon={pinRojoIcon}>
-                      <Popup className="spot-popup">
-                        <div className="p-1 text-black">
-                          <p className="font-bold text-sm text-red-600">{com.nombre_local}</p>
-                          <p className="text-xs text-gray-600">{com.tipo_comercio}</p>
-                          <p className="text-xs text-gray-800 font-medium mt-1">{com.direccion}</p>
+                      <Popup>
+                        <div className="p-1 text-blanco">
+                          <p className="font-bold text-sm text-amarillo">{com.nombre_local}</p>
+                          <p className="text-xs text-gris-azulado uppercase font-semibold">{com.tipo_comercio || 'Minorista'}</p>
+                          <p className="text-xs text-blanco font-medium mt-1">{com.direccion}</p>
                           <Link
                             to={`/productos?comercio=${com.id}`}
-                            className="mt-2 inline-block text-[11px] bg-red-600 text-white font-bold px-2 py-1 rounded"
+                            className="mt-2 inline-block text-[11px] fondo-dorado text-negro font-extrabold px-3 py-1 rounded-lg shadow hover:brightness-110"
                           >
                             Ver productos del local
                           </Link>

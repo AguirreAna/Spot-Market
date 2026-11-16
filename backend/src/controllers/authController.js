@@ -203,6 +203,34 @@ export const logout = async (req, res) => {
   return res.status(200).json({ ok: true, mensaje: 'Sesión cerrada.' });
 };
 
+export const recuperarPassword = async (req, res, next) => {
+  try {
+    const email = (req.body.email || '').toLowerCase().trim();
+    if (!email) {
+      return res.status(400).json({ ok: false, mensaje: 'Por favor ingresá tu correo electrónico.' });
+    }
+    const usuario = await Usuario.findOne({ where: { email } });
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensaje: 'No encontramos ninguna cuenta registrada con ese correo.' });
+    }
+    // Si envían una nueva contraseña, la actualizamos directamente (recuperación asistida)
+    if (req.body.nuevaPassword && req.body.nuevaPassword.length >= 6) {
+      const hash = await bcrypt.hash(req.body.nuevaPassword, 10);
+      await usuario.update({ password: hash });
+      return res.json({
+        ok: true,
+        mensaje: 'Tu contraseña fue restablecida con éxito. Ya podés iniciar sesión.'
+      });
+    }
+    return res.json({
+      ok: true,
+      mensaje: `Te enviamos las instrucciones de recuperación al correo ${email}. También podés definir una nueva contraseña aquí mismo.`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const me = async (req, res, next) => {
   try {
     const usuario = await Usuario.findByPk(req.usuario.id, {

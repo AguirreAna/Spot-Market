@@ -5,7 +5,8 @@ import {
   obtenerMiComercio,
   comerciosCercanos,
   actualizarComercio,
-  masBuscados
+  masBuscados,
+  eliminarFotoComercio
 } from '../controllers/comercioController.js';
 import { verificarToken, verificarRol } from '../middlewares/auth.js';
 import { upload } from '../middlewares/upload.js';
@@ -16,6 +17,7 @@ const router = Router();
 router.get('/mi-comercio', verificarToken, verificarRol('comerciante'), obtenerMiComercio);
 router.get('/cercanos', comerciosCercanos);
 router.get('/mas-buscados', verificarToken, verificarRol('comerciante'), masBuscados);
+router.delete('/fotos/:fotoId', verificarToken, verificarRol('comerciante'), eliminarFotoComercio);
 router.get('/', listarComercios);
 router.get('/:id', obtenerComercio);
 router.put('/:id', verificarToken, verificarRol('comerciante'), upload.array('fotos', 8), actualizarComercio);
