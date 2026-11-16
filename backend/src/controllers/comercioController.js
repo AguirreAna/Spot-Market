@@ -1,6 +1,7 @@
 // Controlador de comercios: listado, detalle, cercanos (Haversine), mi comercio y ranking de productos.
 import { db } from '../models/index.js';
 import { distanciaKm } from '../utils/haversine.js';
+import { guardarImagen } from '../utils/cloudinary.js';
 
 const { Comercio, FotoComercio, Producto, Oferta, Valoracion, Usuario } = db;
 
@@ -73,10 +74,12 @@ export const comerciosCercanos = async (req, res, next) => {
       return res.status(400).json({ ok: false, mensaje: 'Indicá lat y lng válidos.' });
     }
     const comercios = await Comercio.findAll({
-      include: [{ model: FotoComercio, as: 'fotos', attributes: ['id', 'url'] }]
+      include: [
+        { model: FotoComercio, as: 'fotos', attributes: ['id', 'url'] },
+        { model: Producto, as: 'productos', attributes: ['id', 'nombre', 'precio', 'precio_oferta', 'imagen_url', 'categoria'] }
+      ]
     });
     const cercanos = comercios
-      .filter((c) => c.latitud != null && c.longitud != null)
       .map((c) => {
         const d = distanciaKm(lat, lng, parseFloat(c.latitud), parseFloat(c.longitud));
         return { ...c.toJSON(), distancia: Math.round(d * 100) / 100 };
@@ -91,11 +94,14 @@ export const comerciosCercanos = async (req, res, next) => {
 
 export const actualizarComercio = async (req, res, next) => {
   try {
-    const comercio = await Comercio.findByPk(req.params.id);
+    const comercio = await Comercio.findByPk(req.params.id, {
+      include: [{ model: FotoComercio, as: 'fotos' }]
+    });
     if (!comercio) return res.status(404).json({ ok: false, mensaje: 'Comercio no encontrado.' });
     if (comercio.usuarioId !== req.usuario.id) {
       return res.status(403).json({ ok: false, mensaje: 'No podés editar este comercio.' });
     }
+
     const campos = [
       'nombre_local', 'tipo_comercio', 'categoria_productos', 'tipos_productos',
       'telefono', 'whatsapp', 'horario_atencion', 'email', 'direccion', 'latitud', 'longitud'
@@ -103,7 +109,25 @@ export const actualizarComercio = async (req, res, next) => {
     const datos = {};
     for (const c of campos) if (req.body[c] !== undefined) datos[c] = req.body[c];
     await comercio.update(datos);
-    return res.json({ ok: true, mensaje: 'Comercio actualizado correctamente.', comercio });
+
+    // Guardar fotos de fachada adicionales si se adjuntan
+    const archivos = req.files || [];
+    for (const archivo of archivos) {
+      const guardada = await guardarImagen(archivo, 'comercios');
+      if (guardada && guardada.url) {
+        await FotoComercio.create({
+          url: guardada.url,
+          public_id: guardada.public_id,
+          comercioId: comercio.id
+        });
+      }
+    }
+
+    const comercioActualizado = await Comercio.findByPk(comercio.id, {
+      include: [{ model: FotoComercio, as: 'fotos' }]
+    });
+
+    return res.json({ ok: true, mensaje: 'Comercio actualizado correctamente.', comercio: comercioActualizado });
   } catch (error) {
     next(error);
   }

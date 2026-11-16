@@ -9,6 +9,7 @@ import L from 'leaflet';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { TIPOS_COMERCIO, CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
+import LogoCompleto from '../assets/Logo.svg';
 
 const icono = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -163,13 +164,18 @@ export default function RegisterComercio() {
   return (
     <div className="bg-[#070C16] min-h-screen text-white pb-16">
       <div className="max-w-6xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold">
-            Registrá tu <span className="text-[#FFB800]">comercio</span> en Spot Market
-          </h1>
-          <p className="text-gray-400 mt-2">
-            Sumá tu negocio local de Formosa Capital para que los vecinos encuentren tus productos, precios y promociones.
-          </p>
+        <div className="mb-8 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-[#0B1220] border border-white/15 p-1 flex items-center justify-center shadow-xl flex-shrink-0">
+            <img src={LogoCompleto} alt="Spot Market Logo" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extrabold">
+              Registrá tu <span className="text-[#FFB800]">comercio</span> en Spot Market
+            </h1>
+            <p className="text-gray-400 mt-1">
+              Sumá tu negocio local de Formosa Capital para que los vecinos encuentren tus productos, precios y promociones.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={onSubmit} className="grid lg:grid-cols-2 gap-8">

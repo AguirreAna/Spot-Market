@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import LogoNavbar from '../assets/LogoNavbar.svg';
+import LogoCompleto from '../assets/Logo.svg';
 import { CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
 
 export default function Navbar() {
@@ -48,14 +49,17 @@ export default function Navbar() {
   return (
     <header className="bg-[#0B111E] border-b border-white/10 sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-        {/* Logo de SpotMarket */}
-        <Link to="/" className="flex items-center gap-2 flex-shrink-0 group">
-          <div className="w-9 h-9 rounded-full bg-red-600/20 border border-red-500/40 flex items-center justify-center p-1 group-hover:scale-105 transition-transform">
-            <img src={LogoNavbar} alt="Logo" className="w-full h-full object-contain" />
+        {/* Logo oficial SpotMarket */}
+        <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+          <div className="h-10 w-10 rounded-xl bg-[#0B1220] border border-white/10 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform overflow-hidden shadow">
+            <img src={LogoCompleto} alt="Spot Market" className="w-full h-full object-contain" />
           </div>
-          <div className="flex items-baseline font-black tracking-tight text-xl">
-            <span className="text-white">Spot</span>
-            <span className="text-[#FFB800] ml-0.5">Market</span>
+          <div className="flex flex-col">
+            <div className="flex items-baseline font-black tracking-tight text-xl leading-none">
+              <span className="text-white">Spot</span>
+              <span className="text-[#FFB800] ml-0.5">Market</span>
+            </div>
+            <span className="text-[9px] tracking-widest text-gray-400 uppercase font-semibold">Ofertas cerca tuyo</span>
           </div>
         </Link>
 

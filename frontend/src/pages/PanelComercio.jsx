@@ -200,16 +200,17 @@ function DashboardTab({
 
   return (
     <div className="mt-6 space-y-8">
-      {/* 4 TARJETAS KPI */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 3 TARJETAS KPI: PRODUCTOS ACTIVOS, OFERTAS VIGENTES Y VALORACIONES */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-5 shadow-lg">
           <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Productos Activos</p>
           <div className="flex items-baseline justify-between mt-2">
             <span className="text-3xl font-black text-white">{productosCount}</span>
             <button onClick={irAProductos} className="text-xs text-[#FFB800] hover:underline font-semibold">
-              Ver todos &rarr;
+              Ver catálogo &rarr;
             </button>
           </div>
+          <p className="text-[11px] text-emerald-400 font-medium mt-1">En góndola barrial de Formosa</p>
         </div>
 
         <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-5 shadow-lg">
@@ -220,24 +221,20 @@ function DashboardTab({
               Administrar &rarr;
             </button>
           </div>
+          <p className="text-[11px] text-yellow-300/80 font-medium mt-1">Con descuento activo en Inicio</p>
         </div>
 
         <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-5 shadow-lg">
-          <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Vistas Comunitarias</p>
+          <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Valoraciones</p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-3xl font-black text-[#FFB800]">{totalVistas}</span>
-            <span className="text-[10px] text-gray-400">interacciones</span>
-          </div>
-        </div>
-
-        <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-5 shadow-lg">
-          <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Valoración Media</p>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-3xl font-black text-white">
-              {resumenVal?.promedio != null ? `${resumenVal.promedio} ★` : '—'}
+            <span className="text-3xl font-black text-[#FFB800]">
+              {resumenVal?.total != null ? resumenVal.total : 0}
             </span>
-            <span className="text-[10px] text-gray-400">({resumenVal?.total || 0} opiniones)</span>
+            <span className="text-[10px] text-gray-400 font-bold">
+              {resumenVal?.promedio != null ? `${resumenVal.promedio} ★ promedio` : 'Sin reseñas'}
+            </span>
           </div>
+          <p className="text-[11px] text-gray-400 font-medium mt-1">Calificaciones recibidas de los clientes</p>
         </div>
       </div>
 
@@ -288,7 +285,7 @@ function DashboardTab({
         <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <span>💬</span> Valoraciones recibidas de los vecinos
+              <span>💬</span> Valoraciones
             </h3>
             <span className="text-xs text-[#FFB800] font-bold">
               {resumenVal?.promedio ? `${resumenVal.promedio} de 5 estrellas` : 'Sin opiniones'}
@@ -714,6 +711,15 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
 
   const guardarOferta = async (e) => {
     e.preventDefault();
+    if (!productoId) {
+      setError('Debes seleccionar un producto del catálogo.');
+      return;
+    }
+    if (!precioOferta || parseFloat(precioOferta) <= 0) {
+      setError('Ingresá un precio de oferta válido mayor a 0.');
+      return;
+    }
+
     setCargando(true);
     setError('');
 
@@ -721,7 +727,10 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
       const payload = {
         productoId: parseInt(productoId, 10),
         precio_oferta: parseFloat(precioOferta),
-        fecha_fin: new Date(fechaFin).toISOString()
+        fecha_inicio: new Date().toISOString(),
+        fecha_fin: fechaFin
+          ? new Date(fechaFin + 'T23:59:59').toISOString()
+          : new Date(Date.now() + 7 * 86400000).toISOString()
       };
 
       if (ofertaEditar) {
@@ -739,7 +748,10 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
       setModalOferta(false);
       onActualizar();
     } catch (err) {
-      setError(err.message || 'Error al guardar oferta.');
+      const msg = err.detalles?.length
+        ? err.detalles.map((d) => d.mensaje).join(', ')
+        : (err.message || 'Error al guardar oferta.');
+      setError(msg);
     } finally {
       setCargando(false);
     }
@@ -946,10 +958,11 @@ function PerfilTab({ comercio, onActualizar }) {
     tipo_comercio: comercio?.tipo_comercio || 'Minorista',
     telefono: comercio?.telefono || '',
     whatsapp: comercio?.whatsapp || comercio?.telefono || '',
-    horario_atencion: comercio?.horario_atencion || 'Lunes a Sábado 8:00 - 21:00',
+    horario_atencion: comercio?.horario_atencion || 'Lunes a Sábado de 08:00 a 13:00 y de 17:00 a 21:00 hs',
     direccion: comercio?.direccion || '',
     email: comercio?.email || ''
   });
+  const [nuevasFotos, setNuevasFotos] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
@@ -960,11 +973,22 @@ function PerfilTab({ comercio, onActualizar }) {
     setMensaje('');
 
     try {
-      await api(`/comercios/${comercio.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(form)
-      });
+      if (nuevasFotos.length > 0) {
+        const fd = new FormData();
+        Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+        nuevasFotos.forEach((f) => fd.append('fotos', f));
+        await api(`/comercios/${comercio.id}`, {
+          method: 'PUT',
+          body: fd
+        });
+      } else {
+        await api(`/comercios/${comercio.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(form)
+        });
+      }
       setMensaje('Información comercial guardada exitosamente.');
+      setNuevasFotos([]);
       onActualizar();
     } catch (err) {
       alert(`Error al actualizar: ${err.message}`);
@@ -974,11 +998,11 @@ function PerfilTab({ comercio, onActualizar }) {
   };
 
   return (
-    <div className="mt-6 max-w-2xl bg-[#111A2E] border border-white/10 rounded-2xl p-6 shadow-xl space-y-5">
+    <div className="mt-6 max-w-3xl bg-[#111A2E] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
       <div>
         <h3 className="font-bold text-base text-white">Canales de Contacto y Perfil Comercial</h3>
         <p className="text-xs text-gray-400 mt-0.5">
-          Los vecinos verán estos datos para ubicar tu negocio y enviarte mensajes por WhatsApp.
+          Los vecinos verán estos datos para ubicar tu negocio y enviarte mensajes.
         </p>
       </div>
 
@@ -1063,6 +1087,58 @@ function PerfilTab({ comercio, onActualizar }) {
             required
             className="w-full rounded-xl bg-[#070C16] border border-white/10 px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-[#FFB800]"
           />
+        </div>
+
+        {/* ── FOTOGRAFÍAS DEL COMERCIO CARGADAS AL REGISTRARSE ── */}
+        <div className="pt-4 border-t border-white/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="block text-[11px] font-bold uppercase text-[#FFB800]">
+              📸 Fotografías del Local Comercial ({comercio?.fotos?.length || 0})
+            </label>
+            <span className="text-[10px] text-gray-400">Fotos de fachada subidas al registrarse</span>
+          </div>
+
+          {comercio?.fotos && comercio.fotos.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {comercio.fotos.map((f, idx) => (
+                <div
+                  key={f.id || idx}
+                  className="relative group rounded-xl overflow-hidden border border-white/15 bg-black/40 aspect-square shadow hover:border-[#FFB800] transition-colors"
+                >
+                  <img
+                    src={resolverUrlImagen(f.url)}
+                    alt={`Fachada ${idx + 1}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <span className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-[9px] px-2 py-0.5 rounded font-bold">
+                    Foto #{idx + 1}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 italic bg-black/20 p-3 rounded-xl border border-white/5">
+              Aún no tenés fotos de fachada registradas. Podés agregar fotos a continuación.
+            </p>
+          )}
+
+          <div>
+            <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">
+              Subir más fotos de fachada o local
+            </label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => setNuevasFotos(Array.from(e.target.files || []))}
+              className="w-full text-xs text-gray-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FFB800] file:text-black hover:file:bg-yellow-400 cursor-pointer"
+            />
+            {nuevasFotos.length > 0 && (
+              <p className="text-[10px] text-emerald-400 mt-1 font-semibold">
+                ✓ {nuevasFotos.length} nueva(s) foto(s) lista(s) para subir al guardar.
+              </p>
+            )}
+          </div>
         </div>
 
         <button

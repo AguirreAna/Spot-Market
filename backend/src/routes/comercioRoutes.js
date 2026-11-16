@@ -8,6 +8,7 @@ import {
   masBuscados
 } from '../controllers/comercioController.js';
 import { verificarToken, verificarRol } from '../middlewares/auth.js';
+import { upload } from '../middlewares/upload.js';
 
 const router = Router();
 
@@ -17,6 +18,6 @@ router.get('/cercanos', comerciosCercanos);
 router.get('/mas-buscados', verificarToken, verificarRol('comerciante'), masBuscados);
 router.get('/', listarComercios);
 router.get('/:id', obtenerComercio);
-router.put('/:id', verificarToken, verificarRol('comerciante'), actualizarComercio);
+router.put('/:id', verificarToken, verificarRol('comerciante'), upload.array('fotos', 8), actualizarComercio);
 
 export default router;

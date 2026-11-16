@@ -9,6 +9,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
 import { resolverUrlImagen } from '../utils/imageUrl.js';
+import LogoCompleto from '../assets/Logo.svg';
 
 // Fix de iconos de Leaflet en Vite/Webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -73,8 +74,20 @@ export default function Inicio() {
       {/* ── 1. HERO SECTION: Explorá el mapa de SpotMarket ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#0B111E] to-[#070C16] pt-10 pb-16 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Lado izquierdo: Título y bajada */}
+          {/* Lado izquierdo: Logo oficial, Título y bajada */}
           <div className="lg:col-span-5 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-[#0B1220] border border-white/15 p-1 flex items-center justify-center shadow-xl">
+                <img src={LogoCompleto} alt="Spot Market Logo" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-black tracking-widest text-[#FFB800] bg-[#FFB800]/10 px-2.5 py-0.5 rounded-full border border-[#FFB800]/20">
+                  Formosa Capital
+                </span>
+                <p className="text-xs text-gray-400 font-semibold mt-0.5">Comercios y Ofertas de Barrio</p>
+              </div>
+            </div>
+
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none">
               Explorá el <span className="italic font-serif font-normal text-white">mapa</span>
               <br />
