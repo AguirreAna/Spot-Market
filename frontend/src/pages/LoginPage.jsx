@@ -1,20 +1,118 @@
-// Página de login: estética oscura con glassmorphism y fondo de mapa urbano animado.
-import NavbarAuth from '../components/auth/NavbarAuth.jsx';
+// Página de login: estética oscura con mapa real de Formosa Capital en el fondo,
+// mostrando los comercios registrados con el logo de SpotMarket apuntando a su ubicación y su nombre.
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { api } from '../services/api.js';
 import LoginForm from '../components/auth/LoginForm.jsx';
-import AnimatedCityMap from '../components/map/AnimatedCityMap.jsx';
 import LogoCompleto from '../assets/Logo.svg';
+import LogoNavbar from '../assets/LogoNavbar.svg';
+
+const FORMOSA = [-26.1849, -58.1731];
+
+// Genera un icono personalizado con el pin/logo de SpotMarket apuntando a la coordenada y el nombre del comercio
+function crearIconoComercio(nombre) {
+  return L.divIcon({
+    className: 'custom-spotmarket-pin',
+    html: `
+      <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: auto;">
+        <div style="background: rgba(11, 18, 32, 0.95); color: #FFF; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; border: 1.5px solid #FFB800; box-shadow: 0 4px 12px rgba(0,0,0,0.7); white-space: nowrap; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+          <span style="color: #FFB800;">📍</span> ${nombre}
+        </div>
+        <div style="width: 36px; height: 36px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));">
+          <img src="${LogoNavbar}" style="width: 100%; height: 100%; object-fit: contain;" alt="${nombre}" />
+        </div>
+      </div>
+    `,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0]
+  });
+}
 
 export default function LoginPage() {
+  const [comercios, setComercios] = useState([]);
+
+  useEffect(() => {
+    async function cargarComercios() {
+      try {
+        const res = await api('/comercios');
+        setComercios(res.comercios || []);
+      } catch (err) {
+        console.warn('Error cargando comercios en login:', err.message);
+      }
+    }
+    cargarComercios();
+  }, []);
+
   return (
-    <div className="relative min-h-[calc(100vh-57px)] flex items-center justify-center bg-[#050a14] overflow-hidden">
-      <AnimatedCityMap />
-      <NavbarAuth />
-      <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl bg-[#0a1222]/80 backdrop-blur-xl border border-white/10 p-8 shadow-2xl">
-        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#0B1220] border border-white/15 p-1 shadow-xl flex items-center justify-center">
+    <div className="relative min-h-[calc(100vh-57px)] flex items-center justify-center overflow-hidden bg-[#070C16]">
+      {/* ── MAPA DE FORMOSA CAPITAL EN EL FONDO ── */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer
+          center={FORMOSA}
+          zoom={13}
+          style={{ width: '100%', height: '100%' }}
+          zoomControl={false}
+          scrollWheelZoom={true}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {comercios
+            .filter((c) => c.latitud && c.longitud)
+            .map((com) => {
+              const lat = parseFloat(com.latitud);
+              const lng = parseFloat(com.longitud);
+              return (
+                <Marker
+                  key={com.id}
+                  position={[lat, lng]}
+                  icon={crearIconoComercio(com.nombre_local)}
+                >
+                  <Popup className="spot-popup">
+                    <div className="p-1 text-black">
+                      <p className="font-bold text-sm text-red-600">{com.nombre_local}</p>
+                      <p className="text-xs text-gray-700 font-semibold uppercase">{com.tipo_comercio || 'Comercio'}</p>
+                      <p className="text-xs text-gray-800 mt-1">📍 {com.direccion}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+        </MapContainer>
+        {/* Capa oscura sutil con viñeta para destacar la tarjeta de login */}
+        <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] pointer-events-none" />
+      </div>
+
+      {/* Barra superior con indicador de comercios y volver al inicio */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-4 pointer-events-none">
+        <div className="flex items-center gap-2 bg-[#0B111E]/80 backdrop-blur px-3 py-1.5 rounded-xl border border-white/10 pointer-events-auto">
+          <span className="text-xs font-bold text-gray-300">📍 Formosa Capital · {comercios.length} comercios registrados</span>
+        </div>
+        <Link
+          to="/"
+          className="text-xs font-bold bg-[#0B111E]/80 hover:bg-[#0B111E] text-white border border-white/10 px-3.5 py-1.5 rounded-xl shadow transition pointer-events-auto"
+        >
+          &larr; Volver al inicio
+        </Link>
+      </div>
+
+      {/* ── TARJETA FLOTANTE DE INICIO DE SESIÓN ── */}
+      <div className="relative z-10 w-full max-w-md mx-4 rounded-3xl bg-[#0B1220]/95 backdrop-blur-xl border border-white/15 p-8 shadow-2xl space-y-4">
+        <div className="w-20 h-20 mx-auto rounded-2xl bg-[#070C16] border border-white/15 p-1 shadow-2xl flex items-center justify-center">
           <img src={LogoCompleto} alt="Spot Market Logo" className="w-full h-full object-contain" />
         </div>
-        <h1 className="text-2xl font-bold text-white text-center">Bienvenido a <span className="text-amber-400">Spot Market</span></h1>
-        <p className="text-gray-400 text-sm mt-1 mb-6 text-center">Ingresá para valorar, comentar y guardar favoritos.</p>
+        <div className="text-center">
+          <h1 className="text-2xl font-black text-white">
+            Iniciar <span className="text-[#FFB800]">Sesión</span>
+          </h1>
+          <p className="text-gray-400 text-xs mt-1">
+            Accedé a tu cuenta en SpotMarket
+          </p>
+        </div>
         <LoginForm />
       </div>
     </div>
