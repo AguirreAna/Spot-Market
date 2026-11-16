@@ -21,6 +21,10 @@ export const Usuario = sequelize.define(
       unique: true,
       validate: { isEmail: true }
     },
+    telefono: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
     password: {
       type: DataTypes.STRING(255),
       allowNull: false

@@ -4,6 +4,7 @@ import { body } from 'express-validator';
 export const validarRegistro = [
   body('nombre').trim().notEmpty().withMessage('El nombre es obligatorio.'),
   body('email').trim().isEmail().withMessage('Ingresá un correo válido.').normalizeEmail(),
+  body('telefono').optional({ values: 'falsy' }).isString(),
   body('password')
     .isLength({ min: 6 })
     .withMessage('La contraseña debe tener al menos 6 caracteres.')

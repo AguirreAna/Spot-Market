@@ -1,7 +1,7 @@
 // Registro dual para SpotMarket (Formosa Capital):
-// Permite registrar tanto a Vecinos/Usuarios (Consumidores) como a Comerciantes (Locales Comerciales).
-// - Si es Comerciante: Sección 1 (Datos + Tipo Minorista/Mayorista + 27 Rubros A-Z), Sección 2 (Mapa con Agrandar Pantalla), Sección 3 (Fotos de Fachada).
-// - Si es Usuario/Vecino: Registro rápido con nombre, email y contraseña.
+// Permite registrar tanto a Usuarios (Consumidores) como a Comerciantes (Locales Comerciales).
+// - Si es Comerciante: Sección 1 (Datos + Tipo Minorista/Mayorista + 27 Rubros A-Z), Sección 2 (Mapa con Pantalla Completa), Sección 3 (Fotos de Fachada).
+// - Si es Usuario: Registro rápido con nombre, email, teléfono (opcional) y contraseña.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -68,10 +68,11 @@ export default function RegisterComercio() {
   const [fotos, setFotos] = useState([]);
   const [mapaAgrandado, setMapaAgrandado] = useState(false);
 
-  // Formulario Vecino / Usuario
+  // Formulario Usuario (con teléfono opcional)
   const [formUsuario, setFormUsuario] = useState({
     nombre: '',
     email: '',
+    telefono: '',
     password: '',
     confirmar: ''
   });
@@ -118,7 +119,7 @@ export default function RegisterComercio() {
     return FORMOSA;
   }, [form.latitud, form.longitud]);
 
-  // Submit Registro Vecino / Usuario
+  // Submit Registro Usuario
   const onSubmitUsuario = async (e) => {
     e.preventDefault();
     setError('');
@@ -137,6 +138,7 @@ export default function RegisterComercio() {
         body: JSON.stringify({
           nombre: formUsuario.nombre.trim(),
           email: formUsuario.email.trim(),
+          telefono: formUsuario.telefono ? formUsuario.telefono.trim() : null,
           password: formUsuario.password
         })
       });
@@ -188,18 +190,17 @@ export default function RegisterComercio() {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-4 bg-negro">
         <div className="max-w-md w-full rounded-2xl bg-gris-oscuro border border-borde p-8 text-center shadow-2xl">
-          <div className="text-4xl mb-3">🎉</div>
-          <h1 className="text-2xl font-bold text-blanco">
-            {rolRegistro === 'comerciante' ? '¡Comercio registrado con éxito!' : '¡Bienvenido a SpotMarket!'}
+          <h1 className="text-2xl font-bold text-blanco mb-2">
+            {rolRegistro === 'comerciante' ? 'Comercio registrado con éxito' : 'Bienvenido a SpotMarket'}
           </h1>
           <p className="text-gris-azulado mt-2 text-sm">
             {rolRegistro === 'comerciante'
               ? 'Tu local ya forma parte de Spot Market Formosa. Podés ingresar a tu panel para publicar productos y ofertas.'
-              : 'Tu cuenta de vecino fue creada correctamente. Ya podés descubrir comercios, ofertas y valorar productos de tu barrio.'}
+              : 'Tu cuenta de usuario fue creada correctamente. Ya podés descubrir comercios, ofertas y consultar promociones.'}
           </p>
           <button
             onClick={() => nav(rolRegistro === 'comerciante' ? '/panel' : '/')}
-            className="mt-6 w-full rounded-xl fondo-dorado text-negro font-extrabold py-3 text-sm transition shadow-lg hover:brightness-110"
+            className="mt-6 w-full rounded-xl fondo-dorado text-negro font-extrabold py-3 text-sm transition shadow-lg hover:brightness-110 cursor-pointer"
           >
             {rolRegistro === 'comerciante' ? 'Ir a mi panel de comerciante' : 'Explorar ofertas en Formosa'}
           </button>
@@ -227,7 +228,7 @@ export default function RegisterComercio() {
           </Link>
         </div>
 
-        {/* SELECTOR DUAL DE REGISTRO */}
+        {/* SELECTOR DUAL DE REGISTRO (SIN ICONOS, SOLO TEXTO) */}
         <div className="mb-8 rounded-2xl bg-gris-oscuro border border-borde p-1.5 flex gap-2">
           <button
             type="button"
@@ -235,14 +236,13 @@ export default function RegisterComercio() {
               setRolRegistro('comerciante');
               setError('');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center transition cursor-pointer ${
               rolRegistro === 'comerciante'
                 ? 'fondo-dorado text-negro shadow-md'
                 : 'text-gris-azulado hover:text-blanco hover:bg-white/5'
             }`}
           >
-            <span>🏪</span>
-            <span>Soy Comerciante (Registrar Local)</span>
+            Soy Comerciante
           </button>
           <button
             type="button"
@@ -250,32 +250,30 @@ export default function RegisterComercio() {
               setRolRegistro('usuario');
               setError('');
             }}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center transition cursor-pointer ${
               rolRegistro === 'usuario'
                 ? 'fondo-dorado text-negro shadow-md'
                 : 'text-gris-azulado hover:text-blanco hover:bg-white/5'
             }`}
           >
-            <span>👤</span>
-            <span>Soy Vecino / Usuario (Consumidor)</span>
+            Soy Usuario
           </button>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl bg-rojo/15 border border-rojo/40 text-rojo text-xs p-3.5 flex items-center gap-2">
-            <span>⚠️</span>
-            <span>{error}</span>
+          <div className="mb-6 rounded-xl bg-rojo/15 border border-rojo/40 text-rojo text-xs p-3.5">
+            {error}
           </div>
         )}
 
         {/* ═══════════════════════════════════════════════
-            FORMULARIO 1: REGISTRO DE VECINO / USUARIO
+            FORMULARIO 1: REGISTRO DE USUARIO (CON TELÉFONO OPCIONAL)
            ═══════════════════════════════════════════════ */}
         {rolRegistro === 'usuario' ? (
           <form onSubmit={onSubmitUsuario} className="space-y-6">
-            <Seccion n="1" titulo="Datos de la Cuenta del Vecino">
+            <Seccion n="1" titulo="Datos de la Cuenta de Usuario">
               <p className="text-xs text-gris-azulado mb-4">
-                Creá tu cuenta de usuario para seguir comercios de Formosa Capital, valorar productos y recibir ofertas exclusivas.
+                Creá tu cuenta de usuario para seguir comercios de Formosa Capital y recibir promociones.
               </p>
               <div className="space-y-4">
                 <div>
@@ -301,6 +299,18 @@ export default function RegisterComercio() {
                     onChange={setU('email')}
                     placeholder="laura@ejemplo.com"
                     required
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-gris-azulado mb-1.5">
+                    Número de teléfono (opcional)
+                  </label>
+                  <input
+                    type="tel"
+                    value={formUsuario.telefono}
+                    onChange={setU('telefono')}
+                    placeholder="Ej: 3704-123456 (opcional)"
                     className={inputClass}
                   />
                 </div>
@@ -338,9 +348,9 @@ export default function RegisterComercio() {
             <button
               type="submit"
               disabled={cargando}
-              className="w-full rounded-xl fondo-dorado text-negro font-extrabold py-3.5 text-sm transition shadow-lg hover:brightness-110 disabled:opacity-50"
+              className="w-full rounded-xl fondo-dorado text-negro font-extrabold py-3.5 text-sm transition shadow-lg hover:brightness-110 disabled:opacity-50 cursor-pointer"
             >
-              {cargando ? 'Creando tu cuenta de vecino...' : 'Completar Registro de Vecino'}
+              {cargando ? 'Creando tu cuenta de usuario...' : 'Completar Registro de Usuario'}
             </button>
           </form>
         ) : (
@@ -395,13 +405,13 @@ export default function RegisterComercio() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold uppercase text-gris-azulado mb-1.5">
-                    Teléfono / WhatsApp de contacto
+                    Teléfono / WhatsApp de contacto (opcional)
                   </label>
                   <input
                     type="tel"
                     value={form.telefono}
                     onChange={set('telefono')}
-                    placeholder="3704-XXXXXX"
+                    placeholder="3704-XXXXXX (opcional)"
                     className={inputClass}
                   />
                 </div>
@@ -462,7 +472,7 @@ export default function RegisterComercio() {
                         type="button"
                         key={cat}
                         onClick={() => toggleCategoria(cat)}
-                        className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition ${
+                        className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer ${
                           sel
                             ? 'bg-amarillo text-negro border-amarillo font-bold shadow'
                             : 'bg-white/5 text-gris-azulado border-borde hover:text-blanco hover:border-gris-azulado'
@@ -498,9 +508,9 @@ export default function RegisterComercio() {
                   <button
                     type="button"
                     onClick={() => setMapaAgrandado((v) => !v)}
-                    className="font-bold text-amarillo hover:underline flex items-center gap-1"
+                    className="font-bold text-amarillo hover:underline cursor-pointer"
                   >
-                    <span>{mapaAgrandado ? '⤢ Reducir mapa' : '⤢ Agrandar pantalla completa'}</span>
+                    {mapaAgrandado ? 'Reducir mapa' : 'Agrandar pantalla completa'}
                   </button>
                 </div>
 
@@ -520,9 +530,9 @@ export default function RegisterComercio() {
                       <button
                         type="button"
                         onClick={() => setMapaAgrandado(false)}
-                        className="px-3 py-1 rounded-lg bg-rojo text-blanco font-bold text-xs shadow hover:brightness-110"
+                        className="px-3 py-1 rounded-lg bg-rojo text-blanco font-bold text-xs shadow hover:brightness-110 cursor-pointer"
                       >
-                        ✕ Cerrar pantalla completa
+                        Cerrar pantalla completa
                       </button>
                     </div>
                   )}
@@ -550,7 +560,7 @@ export default function RegisterComercio() {
             {/* SECCIÓN 3: FOTOS DE FACHADA */}
             <Seccion n="3" titulo="Fotografías de Fachada del Local">
               <p className="text-xs text-gris-azulado mb-3">
-                Subí fotos claras de la fachada o vidriera para que los vecinos reconozcan tu negocio fácilmente.
+                Subí fotos claras de la fachada o vidriera para que los clientes reconozcan tu negocio fácilmente.
               </p>
               <div className="space-y-4">
                 <input
@@ -576,10 +586,10 @@ export default function RegisterComercio() {
                         <button
                           type="button"
                           onClick={() => quitarFoto(i)}
-                          className="absolute top-1 right-1 bg-rojo text-blanco text-[10px] w-6 h-6 rounded-full flex items-center justify-center font-bold shadow hover:scale-110 transition"
+                          className="absolute top-1 right-1 bg-rojo text-blanco text-[10px] px-2 py-0.5 rounded font-bold shadow hover:scale-105 transition cursor-pointer"
                           title="Quitar foto"
                         >
-                          ✕
+                          Quitar
                         </button>
                       </div>
                     ))}
@@ -591,7 +601,7 @@ export default function RegisterComercio() {
             <button
               type="submit"
               disabled={cargando}
-              className="w-full rounded-xl fondo-dorado text-negro font-extrabold py-3.5 text-sm transition shadow-lg hover:brightness-110 disabled:opacity-50"
+              className="w-full rounded-xl fondo-dorado text-negro font-extrabold py-3.5 text-sm transition shadow-lg hover:brightness-110 disabled:opacity-50 cursor-pointer"
             >
               {cargando ? 'Procesando registro comercial...' : 'Completar Registro de Comercio'}
             </button>

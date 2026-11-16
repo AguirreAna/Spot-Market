@@ -33,8 +33,8 @@ export default function DetalleProducto() {
               className="rounded-xl w-full object-cover max-h-96"
             />
           ) : (
-            <div className="h-64 rounded-xl bg-white/5 flex items-center justify-center text-4xl">
-              📦
+            <div className="h-64 rounded-xl bg-white/5 flex items-center justify-center text-sm text-gray-400 font-medium">
+              Sin imagen
             </div>
           )}
         </div>
@@ -45,7 +45,7 @@ export default function DetalleProducto() {
           {p.descripcion && <p className="mt-4 text-gray-300">{p.descripcion}</p>}
           {p.especificaciones && <p className="mt-2 text-sm text-gray-400"><b>Especificaciones:</b> {p.especificaciones}</p>}
           <div className="mt-6 flex gap-3">
-            <button onClick={toggleFav} className="px-4 py-2 rounded-lg border border-brand-yellow text-brand-yellow hover:bg-brand-yellow/10">♥ Favorito</button>
+            <button onClick={toggleFav} className="px-4 py-2 rounded-lg border border-brand-yellow text-brand-yellow hover:bg-brand-yellow/10">Favorito</button>
             {!usuario && <Link to="/login" className="px-4 py-2 rounded-lg bg-brand-yellow text-black font-semibold">Ingresar para interactuar</Link>}
           </div>
           {msg && <p className="mt-2 text-sm text-gray-300">{msg}</p>}
@@ -57,7 +57,7 @@ export default function DetalleProducto() {
         <div className="mt-3 space-y-3">
           {(p.valoraciones || []).map((v) => (
             <div key={v.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <div className="text-brand-yellow">{'★'.repeat(v.puntuacion)}{'☆'.repeat(5-v.puntuacion)}</div>
+              <div className="text-brand-yellow font-semibold text-sm">Puntuación: {v.puntuacion} / 5</div>
               {v.comentario && <p className="text-gray-300 text-sm mt-1">{v.comentario}</p>}
             </div>
           ))}

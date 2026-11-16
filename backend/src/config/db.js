@@ -75,9 +75,9 @@ export const testConnection = async () => {
     };
   } catch (error) {
     if (env.DB_DIALECT === 'mysql') {
-      console.error(`\n❌ [ERROR MYSQL] No se pudo conectar a MySQL en ${env.DB_HOST}:${env.DB_PORT}.`);
-      console.error(`👉 Si usás XAMPP, abrí el 'XAMPP Control Panel' y hacé click en 'Start' en el módulo MySQL.`);
-      console.error(`👉 Verificá que en tu archivo .env los datos coincidan (usuario: ${env.DB_USER}, base: ${env.DB_NAME}).\n`);
+      console.error(`\n[ERROR MYSQL] No se pudo conectar a MySQL en ${env.DB_HOST}:${env.DB_PORT}.`);
+      console.error(`- Si usás XAMPP, abrí el 'XAMPP Control Panel' y hacé click en 'Start' en el módulo MySQL.`);
+      console.error(`- Verificá que en tu archivo .env los datos coincidan (usuario: ${env.DB_USER}, base: ${env.DB_NAME}).\n`);
     }
     return {
       ok: false,

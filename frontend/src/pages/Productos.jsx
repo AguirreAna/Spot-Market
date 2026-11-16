@@ -143,7 +143,7 @@ export default function Productos() {
                     className="h-full w-full object-contain group-hover:scale-105 transition-transform"
                   />
                 ) : (
-                  <span className="text-4xl opacity-75">📦</span>
+                  <span className="text-xs text-gray-500 font-semibold uppercase">Sin foto</span>
                 )}
               </div>
 
@@ -178,7 +178,6 @@ export default function Productos() {
 
       {!cargando && productos.length === 0 && (
         <div className="mt-12 text-center py-12 rounded-2xl bg-[#111A2E]/50 border border-white/10 p-8">
-          <p className="text-3xl mb-2">🔍</p>
           <h3 className="text-base font-bold text-white">No se encontraron productos</h3>
           <p className="text-xs text-gray-400 mt-1">Probá cambiando el término de búsqueda o la categoría seleccionada.</p>
         </div>

@@ -68,9 +68,9 @@ export default function MapaPage() {
         <button
           type="button"
           onClick={() => setExpandido(true)}
-          className="self-start sm:self-auto fondo-dorado text-negro font-extrabold px-4 py-2 rounded-xl text-xs transition flex items-center gap-2 shadow-lg hover:brightness-110"
+          className="self-start sm:self-auto fondo-dorado text-negro font-extrabold px-4 py-2 rounded-xl text-xs transition flex items-center shadow-lg hover:brightness-110"
         >
-          <span>⛶</span> Agrandar pantalla completa
+          Agrandar pantalla completa
         </button>
       </div>
 
@@ -109,9 +109,9 @@ export default function MapaPage() {
             <button
               type="button"
               onClick={() => setExpandido(false)}
-              className="bg-rojo hover:brightness-110 text-blanco px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg flex items-center gap-1.5"
+              className="bg-rojo hover:brightness-110 text-blanco px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg"
             >
-              <span>✕</span> Salir de pantalla completa
+              Salir de pantalla completa
             </button>
           </div>
           <div className="flex-1 mt-3 rounded-2xl overflow-hidden border border-borde relative">

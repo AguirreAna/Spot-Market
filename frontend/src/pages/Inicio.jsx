@@ -151,10 +151,10 @@ export default function Inicio() {
                 <button
                   type="button"
                   onClick={() => setMapaExpandido(true)}
-                  className="bg-[#FFB800] hover:bg-yellow-400 text-black font-extrabold px-3 py-1.5 rounded-lg text-xs shadow-lg transition flex items-center gap-1.5 cursor-pointer"
+                  className="bg-[#FFB800] hover:bg-yellow-400 text-black font-extrabold px-3 py-1.5 rounded-lg text-xs shadow-lg transition flex items-center cursor-pointer"
                   title="Agrandar mapa en pantalla completa"
                 >
-                  <span>⛶</span> Agrandar mapa
+                  Agrandar mapa
                 </button>
                 <div className="bg-[#0B111E]/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/10 text-xs font-semibold text-[#FFB800] shadow-md hidden sm:flex items-center gap-1.5">
                   Formosa Capital en vivo
@@ -260,9 +260,7 @@ export default function Inicio() {
                   {prod.imagen_url ? (
                     <img src={prod.imagen_url} alt={prod.nombre} className="h-full object-contain group-hover:scale-105 transition-transform" />
                   ) : (
-                    <span className="text-4xl opacity-80 select-none">
-                      {prod.categoria === 'Deportes' ? '👟' : prod.categoria === 'Hogar' ? '🎒' : prod.categoria === 'Limpieza' ? '🧼' : prod.categoria === 'Bebidas' ? '🥤' : '🛒'}
-                    </span>
+                    <span className="text-xs text-gray-500 font-semibold uppercase">Sin foto</span>
                   )}
                 </div>
 
@@ -286,7 +284,7 @@ export default function Inicio() {
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
                     <span className="text-blue-400 font-medium">1,2 km</span>
-                    <span className="text-red-400 font-medium">♥ {prod.likes || 45}</span>
+                    <span className="text-gray-400 font-medium">{prod.likes || 45} me gusta</span>
                   </div>
                 </div>
               </div>
@@ -300,8 +298,8 @@ export default function Inicio() {
         <div className="rounded-2xl bg-gradient-to-r from-[#FFB800] via-[#FFA500] to-[#E59800] text-black p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
           {/* Lado izquierdo con ilustración estilizada de alimentos y almacén */}
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-black/10 border border-black/15 flex items-center justify-center p-3 text-4xl sm:text-5xl shadow-inner">
-              🥫🧺
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-black/10 border border-black/15 flex items-center justify-center p-3 text-center shadow-inner">
+              <span className="font-black text-xs uppercase tracking-wider text-black">Ahorro</span>
             </div>
             <div>
               <h3 className="text-2xl sm:text-4xl font-black tracking-tight leading-none text-slate-950">
@@ -350,8 +348,8 @@ export default function Inicio() {
                   onClick={() => navigate(`/productos/${p.id}`)}
                   className="bg-[#111A2E]/80 backdrop-blur rounded-xl p-4 border border-white/10 hover:border-[#FFB800]/50 transition-all cursor-pointer space-y-2 hover:-translate-y-1"
                 >
-                  <div className="h-28 bg-black/20 rounded-lg flex items-center justify-center text-4xl">
-                    {p.categoria === 'Deportes' ? '👟' : p.categoria === 'Hogar' ? '🎒' : '🎧'}
+                  <div className="h-28 bg-black/20 rounded-lg flex items-center justify-center text-xs text-gray-400 font-semibold uppercase">
+                    {p.categoria || 'Producto'}
                   </div>
                   <h4 className="text-sm font-bold text-white truncate">{p.nombre}</h4>
                   <p className="text-[11px] text-gray-400">{p.comercio?.nombre_local || 'Local céntrico'}</p>
@@ -393,13 +391,13 @@ export default function Inicio() {
               onClick={() => navigate(`/productos/${p.id}`)}
               className="bg-[#111A2E] rounded-xl p-3 border border-white/10 hover:border-[#FFB800]/40 transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-1"
             >
-              <div className="h-28 bg-gradient-to-br from-slate-900 to-[#16223B] rounded-lg flex items-center justify-center text-3xl relative">
+              <div className="h-28 bg-gradient-to-br from-slate-900 to-[#16223B] rounded-lg flex items-center justify-center text-xs text-gray-400 font-semibold uppercase relative">
                 {p.precio_oferta && (
                   <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded">
                     Oferta
                   </span>
                 )}
-                {p.categoria === 'Alimentos' ? '🧉' : p.categoria === 'Limpieza' ? '🧼' : p.categoria === 'Bebidas' ? '☕' : '📦'}
+                {p.categoria || 'Producto'}
               </div>
               <div className="mt-2 space-y-1">
                 <h4 className="text-xs font-bold text-white truncate">{p.nombre}</h4>
@@ -416,7 +414,7 @@ export default function Inicio() {
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
                   <span className="text-blue-400">400 m</span>
-                  <span className="text-red-400">♥ {p.likes || 39}</span>
+                  <span className="text-gray-400">{p.likes || 39} me gusta</span>
                 </div>
               </div>
             </div>
@@ -458,7 +456,6 @@ export default function Inicio() {
           {/* Fachada / Foto local */}
           <div className="w-full md:w-80 h-44 rounded-xl bg-black/10 border border-black/15 overflow-hidden flex items-center justify-center shadow-inner relative">
             <div className="text-center p-4">
-              <span className="text-5xl">🏪</span>
               <p className="font-extrabold text-sm text-black mt-2">APA Supermercados & Almacenes</p>
               <p className="text-xs text-black/75">Formosa Capital · Comercio barrial</p>
             </div>
@@ -487,15 +484,13 @@ export default function Inicio() {
               onClick={() => navigate(`/productos/${prod.id}`)}
               className="bg-[#111A2E] rounded-xl overflow-hidden border border-white/10 hover:border-[#FFB800]/50 transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl"
             >
-              <div className="h-32 bg-slate-900 flex items-center justify-center p-2 relative">
+              <div className="h-32 bg-slate-900 flex items-center justify-center p-2 relative text-xs text-gray-400 font-semibold uppercase">
                 {prod.precio_oferta && (
                   <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded">
                     Oferta
                   </span>
                 )}
-                <span className="text-3xl select-none">
-                  {prod.categoria === 'Alimentos' ? '☕' : prod.categoria === 'Hogar' ? '🕯️' : prod.categoria === 'Limpieza' ? '🧼' : prod.categoria === 'Deportes' ? '👟' : '🔊'}
-                </span>
+                <span>{prod.categoria || 'Destacado'}</span>
               </div>
               <div className="p-3 space-y-1">
                 <h4 className="text-xs font-bold text-white truncate">{prod.nombre}</h4>
@@ -512,7 +507,7 @@ export default function Inicio() {
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
                   <span className="text-blue-400 font-medium">600 m</span>
-                  <span className="text-red-400 font-medium">♥ {prod.likes || 63}</span>
+                  <span className="text-gray-400 font-medium">{prod.likes || 63} me gusta</span>
                 </div>
               </div>
             </div>
@@ -570,10 +565,10 @@ export default function Inicio() {
             <p className="text-xs text-gray-400 max-w-sm">
               Plataforma de centralización y comparación de precios en Formosa Capital. Información confiable para proteger la economía familiar.
             </p>
-            <div className="pt-2 flex items-center gap-3 text-base">
-              <span className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFB800] hover:text-black cursor-pointer transition-colors">📷</span>
-              <span className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFB800] hover:text-black cursor-pointer transition-colors">📘</span>
-              <span className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFB800] hover:text-black cursor-pointer transition-colors">💬</span>
+            <div className="pt-2 flex items-center gap-2 text-xs font-semibold">
+              <span className="px-3 py-1 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFB800] hover:text-black cursor-pointer transition-colors">Instagram</span>
+              <span className="px-3 py-1 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFB800] hover:text-black cursor-pointer transition-colors">Facebook</span>
+              <span className="px-3 py-1 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#FFB800] hover:text-black cursor-pointer transition-colors">WhatsApp</span>
             </div>
           </div>
 
@@ -639,9 +634,9 @@ export default function Inicio() {
             <button
               type="button"
               onClick={() => setMapaExpandido(false)}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow cursor-pointer"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center shadow cursor-pointer"
             >
-              <span>✕</span> Reducir Mapa
+              Reducir Mapa
             </button>
           </div>
           <div className="flex-1 mt-3 rounded-2xl overflow-hidden border border-white/20 shadow-2xl">

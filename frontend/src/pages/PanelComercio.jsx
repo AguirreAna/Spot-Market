@@ -103,7 +103,7 @@ export default function PanelComercio() {
             {comercio?.nombre_local || usuario?.nombre_local || 'Mi Comercio'}
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            {comercio?.direccion || 'Formosa Capital'} {comercio?.telefono ? `· 📞 ${comercio.telefono}` : ''}
+            {comercio?.direccion || 'Formosa Capital'} {comercio?.telefono ? `· Tel: ${comercio.telefono}` : ''}
           </p>
         </div>
 
@@ -113,16 +113,16 @@ export default function PanelComercio() {
             <button
               key={t}
               onClick={() => cambiarTab(t)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow cursor-pointer ${
                 tab === t
-                  ? 'bg-[#FFB800] text-black'
-                  : 'bg-[#111A2E] text-gray-300 hover:text-white border border-white/10 hover:border-white/20'
+                  ? 'fondo-dorado text-negro'
+                  : 'bg-gris-oscuro text-gris-azulado hover:text-blanco border border-borde hover:border-gris-azulado'
               }`}
             >
-              {t === 'Dashboard' && '📊 Métricas / Resumen'}
-              {t === 'Productos' && '📦 Catálogo de Productos'}
-              {t === 'Ofertas' && '🏷️ Ofertas Temporales'}
-              {t === 'Perfil' && '⚙️ Datos del Comercio'}
+              {t === 'Dashboard' && 'Métricas / Resumen'}
+              {t === 'Productos' && 'Catálogo de Productos'}
+              {t === 'Ofertas' && 'Ofertas Temporales'}
+              {t === 'Perfil' && 'Datos del Comercio'}
             </button>
           ))}
         </div>
@@ -130,8 +130,8 @@ export default function PanelComercio() {
 
       {mensaje && (
         <div className="mt-4 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center justify-between">
-          <span>✓ {mensaje}</span>
-          <button onClick={() => setMensaje('')} className="text-gray-400 hover:text-white">✕</button>
+          <span>{mensaje}</span>
+          <button onClick={() => setMensaje('')} className="text-gris-azulado hover:text-blanco text-xs font-bold cursor-pointer">Cerrar</button>
         </div>
       )}
 
@@ -224,89 +224,89 @@ function DashboardTab({
           <p className="text-[11px] text-yellow-300/80 font-medium mt-1">Con descuento activo en Inicio</p>
         </div>
 
-        <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-5 shadow-lg">
-          <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Valoraciones</p>
+        <div className="bg-gris-oscuro border border-borde rounded-2xl p-5 shadow-lg">
+          <p className="text-xs font-bold uppercase text-gris-azulado tracking-wider">Valoraciones</p>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-3xl font-black text-[#FFB800]">
+            <span className="text-3xl font-black text-amarillo">
               {resumenVal?.total != null ? resumenVal.total : 0}
             </span>
-            <span className="text-[10px] text-gray-400 font-bold">
-              {resumenVal?.promedio != null ? `${resumenVal.promedio} ★ promedio` : 'Sin reseñas'}
+            <span className="text-[10px] text-gris-azulado font-bold">
+              {resumenVal?.promedio != null ? `${resumenVal.promedio} de promedio` : 'Sin reseñas'}
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 font-medium mt-1">Calificaciones recibidas de los clientes</p>
+          <p className="text-[11px] text-gris-azulado font-medium mt-1">Calificaciones recibidas de los clientes</p>
         </div>
       </div>
 
       {/* SECCIÓN 2: PRODUCTOS MÁS SOLICITADOS / VISTOS Y CON MEJOR VALORACIÓN */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Productos más solicitados y vistos */}
-        <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <span>🔥</span> Productos más solicitados y vistos
+        <div className="bg-gris-oscuro border border-borde rounded-2xl p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-borde">
+            <h3 className="text-sm font-bold text-blanco uppercase tracking-wider">
+              Productos más solicitados y vistos
             </h3>
-            <span className="text-xs text-gray-400">Interés en Formosa</span>
+            <span className="text-xs text-gris-azulado">Interés en Formosa</span>
           </div>
 
           <div className="space-y-2.5">
             {(masBuscados.length > 0 ? masBuscados : productos.slice(0, 5)).map((p, idx) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5"
+                className="flex items-center justify-between p-3 rounded-xl bg-negro/40 border border-borde/40"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-[#FFB800] w-4">#{idx + 1}</span>
-                  <div className="w-10 h-10 rounded-lg bg-black/40 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-amarillo w-4">#{idx + 1}</span>
+                  <div className="w-10 h-10 rounded-lg bg-negro/60 overflow-hidden flex items-center justify-center flex-shrink-0 text-[10px] text-gris-azulado">
                     {p.imagen_url ? (
                       <img src={resolverUrlImagen(p.imagen_url)} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      '📦'
+                      'Sin foto'
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white truncate max-w-[180px]">{p.nombre}</p>
-                    <p className="text-[10px] text-gray-400">${Number(p.precio_oferta || p.precio).toLocaleString('es-AR')}</p>
+                    <p className="text-xs font-bold text-blanco truncate max-w-[180px]">{p.nombre}</p>
+                    <p className="text-[10px] text-gris-azulado">${Number(p.precio_oferta || p.precio).toLocaleString('es-AR')}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-bold text-emerald-400">{p.vistas || 0} vistas</span>
-                  <p className="text-[10px] text-red-400 font-medium">♥ {p.likes || 0} me gusta</p>
+                  <span className="text-xs font-bold text-verde">{p.vistas || 0} vistas</span>
+                  <p className="text-[10px] text-rojo font-medium">{p.likes || 0} me gusta</p>
                 </div>
               </div>
             ))}
             {productos.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-4">Aún no cargaste productos en tu catálogo.</p>
+              <p className="text-xs text-gris-azulado text-center py-4">Aún no cargaste productos en tu catálogo.</p>
             )}
           </div>
         </div>
 
         {/* Opiniones y valoraciones recibidas de los clientes */}
-        <div className="bg-[#111A2E] border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <span>💬</span> Valoraciones
+        <div className="bg-gris-oscuro border border-borde rounded-2xl p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-borde">
+            <h3 className="text-sm font-bold text-blanco uppercase tracking-wider">
+              Valoraciones
             </h3>
-            <span className="text-xs text-[#FFB800] font-bold">
+            <span className="text-xs text-amarillo font-bold">
               {resumenVal?.promedio ? `${resumenVal.promedio} de 5 estrellas` : 'Sin opiniones'}
             </span>
           </div>
 
           <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {valoraciones.map((val) => (
-              <div key={val.id} className="p-3.5 rounded-xl bg-black/20 border border-white/5 space-y-1">
+              <div key={val.id} className="p-3.5 rounded-xl bg-negro/40 border border-borde/40 space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white">{val.usuario?.nombre || 'Vecino'}</span>
-                    <span className="text-[#FFB800] text-xs">{'★'.repeat(val.puntuacion)}</span>
+                    <span className="text-xs font-bold text-blanco">{val.usuario?.nombre || 'Usuario'}</span>
+                    <span className="text-amarillo text-xs font-bold">{val.puntuacion}/5</span>
                   </div>
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[10px] text-gris-azulado">
                     {val.createdAt ? new Date(val.createdAt).toLocaleDateString('es-AR') : ''}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-300 italic">"{val.comentario}"</p>
+                <p className="text-[11px] text-gris-azulado italic">"{val.comentario}"</p>
                 {val.productoNombre && (
-                  <p className="text-[10px] text-[#FFB800] font-medium pt-1">
+                  <p className="text-[10px] text-amarillo font-medium pt-1">
                     Sobre producto: {val.productoNombre}
                   </p>
                 )}
@@ -453,9 +453,9 @@ function ProductosTab({ productos, onActualizar }) {
 
         <button
           onClick={abrirCrear}
-          className="fondo-dorado text-negro font-extrabold px-5 py-2.5 rounded-xl text-xs transition shadow-lg hover:brightness-110 flex items-center gap-2 self-start sm:self-auto"
+          className="fondo-dorado text-negro font-extrabold px-5 py-2.5 rounded-xl text-xs transition shadow-lg hover:brightness-110 flex items-center justify-center self-start sm:self-auto cursor-pointer"
         >
-          <span>＋</span> Nuevo Producto
+          Nuevo Producto
         </button>
       </div>
 
@@ -481,7 +481,7 @@ function ProductosTab({ productos, onActualizar }) {
                       {p.imagen_url ? (
                         <img src={resolverUrlImagen(p.imagen_url)} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xl">📦</span>
+                        <span className="text-[10px] text-gris-azulado">Sin foto</span>
                       )}
                     </div>
                     <div>
@@ -547,9 +547,9 @@ function ProductosTab({ productos, onActualizar }) {
               <button
                 type="button"
                 onClick={() => setModalAbierto(false)}
-                className="text-gray-400 hover:text-white text-lg font-bold"
+                className="text-gris-azulado hover:text-blanco text-xs font-bold px-2 py-1 cursor-pointer"
               >
-                ✕
+                Cerrar
               </button>
             </div>
 
@@ -642,14 +642,14 @@ function ProductosTab({ productos, onActualizar }) {
                 {previewFoto && (
                   <div className="mt-2 flex items-center gap-3 p-2 rounded-xl bg-black/40 border border-white/10">
                     <img src={previewFoto} alt="Preview" className="h-14 w-14 object-cover rounded-lg border border-white/20" />
-                    <span className="text-[11px] text-emerald-400 font-semibold">✓ Foto lista para guardar</span>
+                    <span className="text-[11px] text-emerald-400 font-semibold">Foto lista para guardar</span>
                   </div>
                 )}
               </div>
 
               {errorModal && (
                 <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-xs">
-                  ⚠️ {errorModal}
+                  {errorModal}
                 </div>
               )}
 
@@ -781,7 +781,7 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
           disabled={productos.length === 0}
           className="bg-[#EF4444] hover:bg-red-500 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center gap-2 disabled:opacity-50"
         >
-          <span>🏷️</span> Crear Nueva Oferta
+          Crear Nueva Oferta
         </button>
       </div>
 
@@ -816,11 +816,11 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-black/40 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-black/40 overflow-hidden flex items-center justify-center flex-shrink-0 text-[10px] text-gray-500 font-semibold">
                     {prod?.imagen_url ? (
                       <img src={resolverUrlImagen(prod.imagen_url)} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      '🏷️'
+                      'Sin foto'
                     )}
                   </div>
                   <div>
@@ -859,7 +859,6 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
 
       {ofertas.length === 0 && (
         <div className="text-center py-12 rounded-2xl bg-[#111A2E]/50 border border-white/10 p-6">
-          <p className="text-3xl mb-2">🏷️</p>
           <h4 className="text-base font-bold text-white">No tenés ofertas creadas</h4>
           <p className="text-xs text-gray-400 mt-1">
             Creá una oferta sobre cualquiera de tus productos para destacarte en la portada de SpotMarket.
@@ -875,7 +874,7 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
               <h3 className="text-base font-extrabold text-white">
                 {ofertaEditar ? 'Editar Oferta' : 'Crear Oferta Temporal'}
               </h3>
-              <button onClick={() => setModalOferta(false)} className="text-gray-400 hover:text-white font-bold">✕</button>
+              <button onClick={() => setModalOferta(false)} className="text-gray-400 hover:text-white font-bold text-xs">Cerrar</button>
             </div>
 
             <form onSubmit={guardarOferta} className="space-y-4 text-xs">
@@ -920,8 +919,8 @@ function OfertasTab({ ofertas, productos, onActualizar }) {
               </div>
 
               {error && (
-                <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-xs">
-                  ⚠️ {error}
+                <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-xs font-semibold">
+                  {error}
                 </div>
               )}
 
@@ -1030,9 +1029,9 @@ function PerfilTab({ comercio, onActualizar }) {
               <h4 className="text-sm font-bold text-blanco">Fotografía del Local Comercial</h4>
               <button
                 onClick={() => setFotoModal(null)}
-                className="text-gris-azulado hover:text-blanco font-bold text-sm px-2 py-1 rounded"
+                className="text-gris-azulado hover:text-blanco font-bold text-xs px-2 py-1 rounded"
               >
-                ✕ Cerrar
+                Cerrar
               </button>
             </div>
             <div className="w-full max-h-[70vh] flex items-center justify-center overflow-hidden rounded-xl bg-black">
@@ -1050,7 +1049,7 @@ function PerfilTab({ comercio, onActualizar }) {
                   onClick={() => handleEliminarFoto(fotoModal.id)}
                   className="px-3 py-1.5 rounded-lg bg-rojo/20 text-rojo border border-rojo/30 hover:bg-rojo/30 font-semibold transition"
                 >
-                  🗑️ Eliminar esta fotografía
+                  Eliminar esta fotografía
                 </button>
               )}
             </div>
@@ -1067,7 +1066,7 @@ function PerfilTab({ comercio, onActualizar }) {
 
       {mensaje && (
         <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs p-3 rounded-xl font-semibold">
-          ✓ {mensaje}
+          {mensaje}
         </div>
       )}
 
@@ -1152,7 +1151,7 @@ function PerfilTab({ comercio, onActualizar }) {
         <div className="pt-4 border-t border-borde space-y-3">
           <div className="flex items-center justify-between">
             <label className="block text-[11px] font-bold uppercase text-amarillo">
-              📸 Fotografías del Local Comercial ({comercio?.fotos?.length || 0})
+              Fotografías del Local Comercial ({comercio?.fotos?.length || 0})
             </label>
             <span className="text-[10px] text-gris-azulado">Hacé clic en cualquier foto para verla ampliada o eliminarla</span>
           </div>
@@ -1181,12 +1180,10 @@ function PerfilTab({ comercio, onActualizar }) {
                         handleEliminarFoto(f.id);
                       }}
                       disabled={eliminandoFotoId === f.id}
-                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-rojo text-blanco opacity-90 hover:opacity-100 hover:scale-110 shadow transition"
+                      className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded bg-rojo text-blanco text-[10px] font-bold shadow hover:brightness-110 transition"
                       title="Eliminar foto"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      Eliminar
                     </button>
                   )}
                 </div>
@@ -1211,7 +1208,7 @@ function PerfilTab({ comercio, onActualizar }) {
             />
             {nuevasFotos.length > 0 && (
               <p className="text-[10px] text-verde mt-1 font-semibold">
-                ✓ {nuevasFotos.length} nueva(s) foto(s) lista(s) para subir al guardar.
+                {nuevasFotos.length} nueva(s) foto(s) lista(s) para subir al guardar.
               </p>
             )}
           </div>

@@ -40,6 +40,7 @@ export const registrar = async (req, res, next) => {
     const usuario = await Usuario.create({
       nombre: data.nombre,
       email,
+      telefono: data.telefono || req.body.telefono || null,
       password: hash,
       rol: 'usuario'
     });
@@ -213,7 +214,9 @@ export const recuperarPassword = async (req, res, next) => {
     if (!usuario) {
       return res.status(404).json({ ok: false, mensaje: 'No encontramos ninguna cuenta registrada con ese correo.' });
     }
-    // Si envían una nueva contraseña, la actualizamos directamente (recuperación asistida)
+    // Generar un código de verificación de 6 dígitos
+    const codigoVerificacion = Math.floor(100000 + Math.random() * 900000);
+    // Si envían una nueva contraseña, la actualizamos directamente
     if (req.body.nuevaPassword && req.body.nuevaPassword.length >= 6) {
       const hash = await bcrypt.hash(req.body.nuevaPassword, 10);
       await usuario.update({ password: hash });
@@ -224,7 +227,8 @@ export const recuperarPassword = async (req, res, next) => {
     }
     return res.json({
       ok: true,
-      mensaje: `Te enviamos las instrucciones de recuperación al correo ${email}. También podés definir una nueva contraseña aquí mismo.`
+      codigo: codigoVerificacion,
+      mensaje: `Código de verificación enviado a ${email}: ${codigoVerificacion}. Ingresalo junto con tu nueva contraseña para restablecer tu cuenta.`
     });
   } catch (error) {
     next(error);
