@@ -1,8 +1,9 @@
 # Dependencias
 node_modules/
 
-# Variables de entorno (no subir secretos)
-.env
+# Variables de entorno
+!.env
+!.env.example
 
 # Logs
 npm-debug.log*
@@ -20,7 +21,7 @@ Thumbs.db
 dist/
 build/
 
-# Base de datos local y archivos subidos
+# Base de datos local y archivos subidos temporales
 data/
 uploads/
 *.sqlite

@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
+import { CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
+import { resolverUrlImagen } from '../utils/imageUrl.js';
 
 export default function Productos() {
   const [q, setQ] = useState('');
@@ -33,11 +35,29 @@ export default function Productos() {
       <h1 className="text-3xl font-bold">Productos</h1>
       <p className="text-gray-400 mt-1">Buscá y compará precios entre comercios de Formosa.</p>
       <div className="mt-6 flex flex-wrap gap-3">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre"
-          className="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
-        <input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Categoría"
-          className="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
-        <select value={orden} onChange={(e) => setOrden(e.target.value)} className="rounded-lg bg-[#0a1222] border border-white/10 px-3 py-2">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar por nombre..."
+          className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white"
+        />
+        <select
+          value={categoria}
+          onChange={(e) => setCategoria(e.target.value)}
+          className="rounded-lg bg-[#0a1222] border border-white/10 px-3 py-2 text-white"
+        >
+          <option value="">Todas las categorías (A-Z)</option>
+          {CATEGORIAS_PRODUCTOS.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <select
+          value={orden}
+          onChange={(e) => setOrden(e.target.value)}
+          className="rounded-lg bg-[#0a1222] border border-white/10 px-3 py-2 text-white"
+        >
           <option value="">Más recientes</option>
           <option value="precio_asc">Precio: menor a mayor</option>
           <option value="precio_desc">Precio: mayor a menor</option>
@@ -67,7 +87,13 @@ export default function Productos() {
       <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {productos.map((p) => (
           <Link to={`/productos/${p.id}`} key={p.id} className="rounded-xl bg-white/5 border border-white/10 p-4 hover:border-brand-yellow/40 transition">
-            {p.imagen_url && <img src={p.imagen_url} alt={p.nombre} className="h-36 w-full object-cover rounded-lg mb-3" />}
+            {p.imagen_url && (
+              <img
+                src={resolverUrlImagen(p.imagen_url)}
+                alt={p.nombre}
+                className="h-36 w-full object-cover rounded-lg mb-3"
+              />
+            )}
             <div className="font-semibold">{p.nombre}</div>
             <div className="text-sm text-gray-400">{p.comercio?.nombre_local}</div>
             <div className="mt-2 text-brand-yellow font-bold">${Number(p.precio).toLocaleString('es-AR')} <span className="text-xs text-gray-400 font-normal">/ {p.tipo_precio === 'mensual' ? 'mes' : 'día'}</span></div>

@@ -1,4 +1,4 @@
-// Validaciones de auth con express-validator (se usan como middleware en las rutas).
+// Validaciones de autenticación con express-validator para SpotMarket.
 import { body } from 'express-validator';
 
 export const validarRegistro = [
@@ -12,8 +12,12 @@ export const validarRegistro = [
 export const validarRegistroComercio = [
   body('nombre').trim().notEmpty().withMessage('El nombre del responsable es obligatorio.'),
   body('nombre_local').trim().notEmpty().withMessage('El nombre del local es obligatorio.'),
-  body('tipo_comercio').trim().notEmpty().withMessage('Seleccioná el tipo de comercio.'),
-  body('tipos_productos').optional({ values: 'falsy' }).isString(),
+  body('tipo_comercio')
+    .trim()
+    .notEmpty()
+    .withMessage('Seleccioná el tipo de comercio (minorista o mayorista).'),
+  body('categoria_productos').optional({ values: 'falsy' }),
+  body('tipos_productos').optional({ values: 'falsy' }),
   body('telefono').optional({ values: 'falsy' }).isString(),
   body('email').trim().isEmail().withMessage('Ingresá un correo válido.').normalizeEmail(),
   body('password')

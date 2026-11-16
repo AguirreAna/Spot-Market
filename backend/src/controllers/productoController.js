@@ -3,7 +3,7 @@
 import { Op } from 'sequelize';
 import { matchedData } from 'express-validator';
 import { db } from '../models/index.js';
-import { subirABufferCloudinary } from '../utils/cloudinaryUpload.js';
+import { guardarImagen } from '../utils/imageStorage.js';
 import { obtenerComercioDelUsuario, productoDelComercio } from '../utils/propiedad.js';
 
 const { Producto, Comercio, Oferta, Valoracion } = db;
@@ -80,12 +80,10 @@ export const crearProducto = async (req, res, next) => {
     let imagen_public_id = null;
 
     if (req.file) {
-      try {
-        const subida = await subirABufferCloudinary(req.file.buffer, 'spotmarket/productos');
+      const subida = await guardarImagen(req.file, 'productos');
+      if (subida) {
         imagen_url = subida.url;
         imagen_public_id = subida.public_id;
-      } catch (errUpload) {
-        console.warn('Fallo upload Cloudinary, guardando URL por defecto:', errUpload.message);
       }
     }
 
@@ -120,12 +118,10 @@ export const actualizarProducto = async (req, res, next) => {
 
     const data = matchedData(req, { includeOptionals: true });
     if (req.file) {
-      try {
-        const subida = await subirABufferCloudinary(req.file.buffer, 'spotmarket/productos');
+      const subida = await guardarImagen(req.file, 'productos');
+      if (subida) {
         data.imagen_url = subida.url;
         data.imagen_public_id = subida.public_id;
-      } catch (errUpload) {
-        console.warn('Fallo upload Cloudinary en actualización:', errUpload.message);
       }
     } else if (req.body.imagen_url) {
       data.imagen_url = req.body.imagen_url;

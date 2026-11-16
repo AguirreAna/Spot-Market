@@ -7,6 +7,8 @@ import { api } from '../services/api.js';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
+import { resolverUrlImagen } from '../utils/imageUrl.js';
 
 // Fix de iconos de Leaflet en Vite/Webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -23,26 +25,14 @@ const pinRojoIcon = L.divIcon({
   iconAnchor: [14, 28]
 });
 
-const CATEGORIAS = [
-  'Deportes',
-  'Hogar',
-  'Alimentos',
-  'Mascotas',
-  'Bebidas',
-  'Panadería',
-  'Frutas y Verduras',
-  'Limpieza',
-  'Ferretería',
-  'Librería',
-  'Farmacia',
-  'Otros'
-];
+const CATEGORIAS = CATEGORIAS_PRODUCTOS;
 
 export default function Inicio() {
   const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [comercios, setComercios] = useState([]);
   const [categoriaActiva, setCategoriaActiva] = useState(null);
+  const [mapaExpandido, setMapaExpandido] = useState(false);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -144,8 +134,18 @@ export default function Inicio() {
                   );
                 })}
               </MapContainer>
-              <div className="absolute top-3 right-3 z-[400] bg-[#0B111E]/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/10 text-xs font-semibold text-[#FFB800] shadow-md flex items-center gap-1.5">
-                <span>📍</span> Formosa Capital en vivo
+              <div className="absolute top-3 right-3 z-[400] flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMapaExpandido(true)}
+                  className="bg-[#FFB800] hover:bg-yellow-400 text-black font-extrabold px-3 py-1.5 rounded-lg text-xs shadow-lg transition flex items-center gap-1.5 cursor-pointer"
+                  title="Agrandar mapa en pantalla completa"
+                >
+                  <span>⛶</span> Agrandar mapa
+                </button>
+                <div className="bg-[#0B111E]/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/10 text-xs font-semibold text-[#FFB800] shadow-md hidden sm:flex items-center gap-1.5">
+                  <span>📍</span> Formosa Capital en vivo
+                </div>
               </div>
             </div>
           </div>
@@ -611,6 +611,62 @@ export default function Inicio() {
           </button>
         </div>
       </footer>
+
+      {/* ── MODAL FULL-SCREEN: MAPA EXPANDIDO EN PANTALLA COMPLETA ── */}
+      {mapaExpandido && (
+        <div className="fixed inset-0 z-[1000] bg-[#070C16]/95 backdrop-blur-md flex flex-col p-4 sm:p-6">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <span>📍</span> Mapa en vivo de Formosa Capital — Comercios de Barrio
+              </h2>
+              <p className="text-xs text-gray-400">
+                Mostrando {comercios.length} comercios de cercanía geolocalizados.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMapaExpandido(false)}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow cursor-pointer"
+            >
+              <span>✕</span> Reducir Mapa
+            </button>
+          </div>
+          <div className="flex-1 mt-3 rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
+            <MapContainer
+              center={[-26.185, -58.175]}
+              zoom={14}
+              style={{ width: '100%', height: '100%' }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {comercios.map((com) => {
+                const lat = parseFloat(com.latitud) || -26.185;
+                const lng = parseFloat(com.longitud) || -58.175;
+                return (
+                  <Marker key={com.id} position={[lat, lng]} icon={pinRojoIcon}>
+                    <Popup className="spot-popup">
+                      <div className="p-1 text-black">
+                        <p className="font-bold text-sm text-red-600">{com.nombre_local}</p>
+                        <p className="text-xs text-gray-600 uppercase font-semibold">{com.tipo_comercio || 'Minorista'}</p>
+                        <p className="text-xs text-gray-800 font-medium mt-1">📍 {com.direccion}</p>
+                        <Link
+                          to={`/productos?comercio=${com.id}`}
+                          className="mt-2 inline-block text-[11px] bg-red-600 text-white font-bold px-2 py-1 rounded"
+                        >
+                          Ver catálogo del local
+                        </Link>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

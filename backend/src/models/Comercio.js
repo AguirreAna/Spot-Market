@@ -1,5 +1,6 @@
 // Modelo Comercio: perfil público del local de un comerciante.
-// Guarda ubicación (lat/lng) para el mapa y el cálculo de cercanía con Haversine.
+// Guarda tipo de comercio ('minorista', 'mayorista') y categoría de productos.
+// Guarda ubicación (lat/lng) para el mapa interactivo y cálculo de cercanía.
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/db.js';
 
@@ -16,11 +17,18 @@ export const Comercio = sequelize.define(
       allowNull: false
     },
     tipo_comercio: {
+      // 'minorista' | 'mayorista'
       type: DataTypes.STRING(80),
-      allowNull: false
+      allowNull: false,
+      defaultValue: 'minorista'
+    },
+    categoria_productos: {
+      // Categorías de productos que comercializa en orden alfabético
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     tipos_productos: {
-      // Lista de rubros/productos que vende; se guarda como texto (CSV/JSON simple).
+      // Alias de compatibilidad
       type: DataTypes.TEXT,
       allowNull: true
     },

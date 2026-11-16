@@ -10,26 +10,27 @@
 ## 📑 Tabla de Contenidos
 1. [Resumen Ejecutivo del Proyecto](#1-resumen-ejecutivo-del-proyecto)
 2. [Reglas de Negocio Clave (Alcance y Delimitación)](#2-reglas-de-negocio-clave-alcance-y-delimitación)
-3. [Arquitectura Técnica Integral](#3-arquitectura-técnica-integral)
-4. [Ecosistema de Base de Datos (Sequelize + MySQL / SQLite)](#4-ecosistema-de-base-de-datos-sequelize--mysql--sqlite)
-5. [Gestión Multimedia con Cloudinary](#5-gestión-multimedia-con-cloudinary)
-6. [Seguridad y Autenticación (JWT + HttpOnly Cookies)](#6-seguridad-y-autenticación-jwt--httponly-cookies)
-7. [Módulo Comerciante Desacoplado y Guía de Integración](#7-módulo-comerciante-desacoplado-y-guía-de-integración)
-8. [Guion de Defensa Oral (20 Minutos - 4 Integrantes)](#8-guion-de-defensa-oral-20-minutos---4-integrantes)
-9. [Preguntas Típicas de la Mesa Examinadora y Respuestas Modelo](#9-preguntas-típicas-de-la-mesa-examinadora-y-respuestas-modelo)
+3. [Tipos de Comercio y Categorías de Productos](#3-tipos-de-comercio-y-categorías-de-productos)
+4. [Arquitectura Técnica Integral](#4-arquitectura-técnica-integral)
+5. [Ecosistema de Base de Datos (MySQL / phpMyAdmin con XAMPP)](#5-ecosistema-de-base-de-datos-mysql--phpmyadmin-con-xampp)
+6. [Gestión Multimedia (Almacenamiento Local + Cloudinary)](#6-gestión-multimedia-almacenamiento-local--cloudinary)
+7. [Seguridad y Autenticación (JWT + HttpOnly Cookies + Transacciones Atómicas)](#7-seguridad-y-autenticación-jwt--httponly-cookies--transacciones-atómicas)
+8. [Módulo Comerciante Desacoplado y Guía de Integración](#8-módulo-comerciante-desacoplado-y-guía-de-integración)
+9. [Guion de Defensa Oral (20 Minutos - 4 Integrantes)](#9-guion-de-defensa-oral-20-minutos---4-integrantes)
+10. [Preguntas Típicas de la Mesa Examinadora y Respuestas Modelo](#10-preguntas-típicas-de-la-mesa-examinadora-y-respuestas-modelo)
 
 ---
 
 ## 1. Resumen Ejecutivo del Proyecto
 
-**SpotMarket** es una aplicación web full-stack diseñada para conectar a los vecinos de la ciudad de **Formosa Capital** con los comercios de cercanía (almacenes, fruterías, ferreterías, tiendas de tecnología y deportes).
+**SpotMarket** es una aplicación web full-stack diseñada para conectar a los vecinos de la ciudad de **Formosa Capital** con los comercios de cercanía (almacenes, fruterías, carnicerías, ferreterías, tiendas de calzado y más).
 
 A diferencia de un e-commerce tradicional de venta minorista global, SpotMarket es una **plataforma de descubrimiento y visibilización de precios locales**, donde los comerciantes publican sus ofertas, catálogo y facilidades de pago (cuotas sin interés), permitiendo que el consumidor ubique el negocio en el mapa interactivo y concrete la compra de forma presencial o directa a través de WhatsApp.
 
 ```mermaid
 flowchart LR
     subgraph Cliente["Frontend (React 18 + Vite)"]
-        UI_Home["Página Inicio<br/>(Ofertas, Destacados, Mapa)"]
+        UI_Home["Página Inicio<br/>(Ofertas, Destacados, Mapa Fullscreen)"]
         UI_Auth["Módulo Auth<br/>(Login / Registro Comercio)"]
         UI_Panel["Panel Comerciante<br/>(CRUD Productos y Ofertas)"]
     end
@@ -37,21 +38,21 @@ flowchart LR
     subgraph Servidor["Backend (Node.js + Express)"]
         API["Rutas REST /api"]
         AuthMid["Middleware Auth (JWT Cookie)"]
-        MulterMid["Middleware Upload (Multer)"]
-        Controller["Controladores de Negocio"]
+        UploadMid["Almacenamiento Multimedia (Local / Cloudinary)"]
+        Controller["Controladores de Negocio con Transacciones"]
     end
 
     subgraph Persistencia["Datos y Multimedia"]
         ORM["Sequelize ORM"]
-        DB[("MySQL / SQLite")]
-        Cloud["Cloudinary CDN"]
+        DB[("MySQL 8.0 (XAMPP / phpMyAdmin)")]
+        Storage["/uploads y Cloudinary"]
     end
 
     UI_Home -->|fetch GET| API
     UI_Auth -->|fetch POST /login| API
     UI_Panel -->|fetch POST/PUT con Cookie| API
     API --> AuthMid --> Controller
-    API --> MulterMid --> Cloud
+    API --> UploadMid --> Storage
     Controller --> ORM --> DB
 ```
 
@@ -63,309 +64,197 @@ Durante la presentación final, es fundamental justificar por qué se omitieron 
 
 1. **Sin Carrito de Compras ni Pedidos:** No se procesan pagos ni transacciones en la app. El objetivo es incentivar el comercio de barrio y el contacto directo comerciante-vecino vía WhatsApp o mostrador.
 2. **Sin Manejo de Stock:** Los comercios de barrio actualizan precios y catálogo; la existencia física se coordina directamente por WhatsApp, evitando inconsistencias de stock en tiempo real que requieren sincronización con puntos de venta físicos (POS).
-3. **Sin Regateo ni Negociación:** Los precios son transparentes y fijos (precio regular y precio de oferta).
-4. **Sin Chat Interno:** Se sustituye un sistema de chat complejo por un enlace directo y rápido a la API de WhatsApp (`https://wa.me/...`), garantizando que el comerciante reciba las consultas de inmediato en su teléfono celular.
+3. **Sin Regateo ni Negociación:** Los precios son transparentes y fijos (precio regular y precio de oferta con financiación en cuotas).
+4. **Sin Chat Interno:** Se sustituye un sistema de chat complejo por un enlace directo y verificado a la API de WhatsApp (`https://wa.me/...`), garantizando que el comerciante reciba las consultas de inmediato en su teléfono celular.
 5. **Sin Directorio Público de Usuarios:** Se respeta la privacidad de los vecinos; los usuarios no tienen perfiles públicos ni pueden ser visualizados por terceros.
 6. **Sin Calificaciones de Comercios (Solo Calificación de Productos):** Para evitar difamaciones o competencia desleal entre comercios barriales, los comercios no reciben calificaciones globales; la comunidad califica exclusivamente la calidad de los productos concretos (1 a 5 estrellas y opiniones).
 7. **Página de Inicio Basada en Relevancia Comercial:** En lugar de "comercios mejor calificados", la pantalla principal destaca:
-   - *Productos más solicitados y vendidos*
-   - *Ofertas de la semana (con porcentaje de descuento)*
-   - *Productos con financiación en cuotas*
+   - *Productos más solicitados y vendidos (Destacados)*
+   - *Ofertas de la semana (con porcentaje de ahorro real)*
+   - *Productos con financiación en cuotas sin interés*
    - *Últimas novedades del catálogo*
-   - *Comercios de tu barrio geolocalizados*
+   - *Comercios de tu barrio geolocalizados con opción de Agrandar Pantalla Completa*
 
 ---
 
-## 3. Arquitectura Técnica Integral
+## 3. Tipos de Comercio y Categorías de Productos
+
+### Tipos de Comercio
+El sistema clasifica los comercios en dos modalidades oficiales:
+- **Minorista:** Comercios orientados a la venta directa al consumidor final (vecinos).
+- **Mayorista:** Comercios y distribuidoras barriales para compras por volumen o reventa.
+
+### Categoría de Productos (27 opciones oficiales en orden alfabético)
+Tanto en el registro de comercio, como en el panel de carga de productos y en los filtros de búsqueda del catálogo, se utiliza estrictamente el listado alfabético:
+1. **Almacén**
+2. **Artesanías**
+3. **Artículos de limpieza**
+4. **Bazar**
+5. **Bebidas**
+6. **Carnicería**
+7. **Embutidos**
+8. **Farmacias**
+9. **Ferretería**
+10. **Fiambrería**
+11. **Forrajería / Pet Shop**
+12. **Frutería**
+13. **Juguetería**
+14. **Kiosco**
+15. **Lácteos**
+16. **Librería**
+17. **Maxikiosco**
+18. **Mueblería**
+19. **Panadería**
+20. **Pescadería**
+21. **Polirubro**
+22. **Pollería**
+23. **Regalería**
+24. **Ropería**
+25. **Verdulería**
+26. **Vivero**
+27. **Zapatería**
+
+---
+
+## 4. Arquitectura Técnica Integral
 
 ### Estructura de Directorios del Proyecto Completo
 
 ```text
 spot-market/
 ├── backend/
+│   ├── .env                       # Configuración estándar lista para XAMPP / MySQL
+│   ├── .env.example
+│   ├── uploads/                   # Carpeta estática donde se sirven las fotos subidas
 │   ├── src/
 │   │   ├── config/
-│   │   │   ├── db.js              # Conexión Sequelize dual (MySQL y SQLite fallback)
-│   │   │   ├── cloudinary.js      # Configuración de credenciales de Cloudinary
-│   │   │   └── env.js             # Variables de entorno centralizadas
+│   │   │   ├── db.js              # Conexión Sequelize a MySQL con auto-creación de base de datos
+│   │   │   ├── env.js             # Lector de variables de entorno .env
+│   │   │   └── cloudinary.js      # Configuración de credenciales de Cloudinary
 │   │   ├── controllers/
-│   │   │   ├── authController.js       # Registro, login con JWT y logout
+│   │   │   ├── authController.js       # Registro con transacción atómica, login JWT y logout
 │   │   │   ├── comercioController.js   # Listado público y perfil de comercios
-│   │   │   ├── productoController.js   # CRUD de catálogo, filtros y destacados
+│   │   │   ├── productoController.js   # CRUD de catálogo, filtros y destacados con guardado de fotos
 │   │   │   ├── ofertaController.js     # Promociones temporales
 │   │   │   ├── valoracionController.js # Calificaciones de 1-5 estrellas en productos
 │   │   │   └── favoritoController.js   # Guardado de productos preferidos
 │   │   ├── middlewares/
 │   │   │   ├── auth.js            # Extracción y verificación de token JWT en cookie
-│   │   │   ├── upload.js          # Procesamiento en memoria de archivos con Multer
+│   │   │   ├── upload.js          # Multer memoryStorage para subida de imágenes
 │   │   │   └── validateRequest.js # Validación de esquemas con express-validator
 │   │   ├── models/
-│   │   │   ├── Usuario.js         # Credenciales y rol ('comercio', 'consumidor')
-│   │   │   ├── Comercio.js        # Datos fiscales, teléfono, WhatsApp, latitud/longitud
-│   │   │   ├── FotoComercio.js    # Fotos de fachada y local
-│   │   │   ├── Producto.js        # Catálogo, precio, cuotas, imagen Cloudinary
+│   │   │   ├── Usuario.js         # Credenciales y rol ('comerciante', 'usuario')
+│   │   │   ├── Comercio.js        # Tipo de comercio ('minorista'/'mayorista'), categorías, lat/lng
+│   │   │   ├── FotoComercio.js    # Fotos de fachada y salón de ventas
+│   │   │   ├── Producto.js        # Catálogo, precio, cuotas, imagen
 │   │   │   ├── Oferta.js          # Descuentos porcentuales con vigencia
 │   │   │   ├── Valoracion.js      # Puntuación y reseñas en productos
-│   │   │   ├── Favorito.js        # Relación N:M usuario-producto
-│   │   │   └── index.js           # Definición de relaciones y asociaciones Sequelize
-│   │   ├── routes/                # Enrutadores REST montados en /api
-│   │   ├── seed.js                # Poblado automático con 7 comercios reales de Formosa
+│   │   │   └── Favorito.js        # Relación N:M usuario-producto
+│   │   ├── seed.js                # Poblado con 7 comercios y 17 productos con categorías A-Z
 │   │   └── utils/
-│   │       ├── cloudinaryUpload.js # Pipe stream a la API de Cloudinary
-│   │       ├── cookie.js           # Opciones de cookies seguras (httpOnly, sameSite)
-│   │       └── haversine.js        # Cálculo de distancia geográfica en km
-│   ├── app.js                     # Configuración de Express, CORS y middlewares
+│   │       ├── imageStorage.js    # Gestor dual de imágenes (Local /uploads + Cloudinary)
+│   │       ├── cookie.js          # Opciones de cookies seguras (httpOnly, sameSite)
+│   │       └── haversine.js       # Cálculo de distancia geográfica en km
+│   ├── app.js                     # Configuración de Express, CORS y servicio estático /uploads
 │   └── server.js                  # Inicialización del puerto HTTP
 └── frontend/
     ├── src/
-    │   ├── assets/                # Logotipos SVG de alta resolución (Logo.svg, LogoNavbar.svg)
+    │   ├── constants/
+    │   │   └── categorias.js      # Tipos de comercio y 27 categorías oficiales A-Z
+    │   ├── utils/
+    │   │   └── imageUrl.js        # Normalizador de URLs locales y de nube
     │   ├── components/
-    │   │   ├── Navbar.jsx         # Menú con buscador reactivo, categorías y sesión
-    │   │   ├── auth/              # Formularios de autenticación
-    │   │   └── map/               # Componentes Leaflet para geolocalización en Formosa
-    │   ├── hooks/
-    │   │   ├── useFetch.js        # Custom hook con AbortController
-    │   │   └── useForm.js         # Custom hook para formularios controlados
+    │   │   └── Navbar.jsx         # Menú con buscador reactivo, categorías y sesión
     │   ├── pages/
-    │   │   ├── Inicio.jsx         # Pantalla principal con ofertas, cuotas y mapa
-    │   │   ├── Productos.jsx      # Catálogo con filtros de categoría y precio
+    │   │   ├── Inicio.jsx         # Pantalla principal con mapa Leaflet y botón Agrandar Pantalla
+    │   │   ├── Productos.jsx      # Catálogo con selector de 27 categorías A-Z
     │   │   ├── DetalleProducto.jsx# Vista ampliada, cuotas, valoraciones y botón WhatsApp
-    │   │   ├── Ofertas.jsx        # Carrusel y tarjetas de promociones activas
-    │   │   ├── MapaPage.jsx       # Mapa interactivo completo de Formosa Capital
-    │   │   └── PanelComercio.jsx  # Administración para comerciantes
-    │   ├── services/api.js        # Wrapper fetch nativo con credentials: 'include'
-    │   └── index.css              # Estilos Tailwind con paleta de alto contraste
+    │   │   ├── MapaPage.jsx       # Mapa interactivo con soporte de pantalla completa
+    │   │   ├── RegisterComercio.jsx # Alta en 3 secciones con previsualización de fotos y mapa fullscreen
+    │   │   └── PanelComercio.jsx  # Administración para comerciantes con subida de fotos y preview
+    │   └── services/api.js        # Cliente fetch nativo con credentials: 'include'
     ├── tailwind.config.js
     └── vite.config.js
 ```
 
 ---
 
-## 4. Ecosistema de Base de Datos (Sequelize + MySQL / SQLite)
+## 5. Ecosistema de Base de Datos (MySQL / phpMyAdmin con XAMPP)
 
-### Modelo Entidad-Relación
+El proyecto está configurado para operar de forma nativa con **MySQL** en el puerto `3306` (el estándar de XAMPP):
 
-```mermaid
-erDiagram
-    USUARIOS ||--o| COMERCIOS : "tiene (1 a 1)"
-    USUARIOS ||--o{ VALORACIONES : "escribe"
-    USUARIOS ||--o{ FAVORITOS : "guarda"
-    COMERCIOS ||--o{ FOTOS_COMERCIO : "posee"
-    COMERCIOS ||--o{ PRODUCTOS : "publica"
-    PRODUCTOS ||--o{ OFERTAS : "tiene"
-    PRODUCTOS ||--o{ VALORACIONES : "recibe"
-    PRODUCTOS ||--o{ FAVORITOS : "es_guardado"
-
-    USUARIOS {
-        int id PK
-        string email
-        string password
-        string rol "comercio | consumidor"
-    }
-
-    COMERCIOS {
-        int id PK
-        int usuario_id FK
-        string nombre_comercio
-        string direccion
-        string telefono
-        string whatsapp
-        decimal latitud
-        decimal longitud
-    }
-
-    PRODUCTOS {
-        int id PK
-        int comercio_id FK
-        string nombre
-        string categoria
-        decimal precio
-        decimal precio_oferta
-        int cuotas
-        string imagen_url
-        boolean destacado
-    }
-
-    OFERTAS {
-        int id PK
-        int producto_id FK
-        decimal porcentaje_descuento
-        datetime fecha_fin
-        boolean activa
-    }
-
-    VALORACIONES {
-        int id PK
-        int producto_id FK
-        int usuario_id FK
-        int puntuacion "1 a 5"
-        text comentario
-    }
-```
-
-### Justificación Técnica de la Persistencia Dual:
-- **En Producción / Laboratorio:** Se conecta a **MySQL 8.0** mediante el driver `mysql2`.
-- **En Demostración / Evaluación:** Si el servidor MySQL local no está levantado durante la presentación, el módulo [db.js](file:///home/fernandez/spot-market/backend/src/config/db.js) detecta el fallo automáticamente y levanta **SQLite** (`./data/spotmarket.sqlite`), garantizando que la defensa **nunca se interrumpa por problemas de base de datos**.
-
----
-
-## 5. Gestión Multimedia con Cloudinary
-
-Para el almacenamiento de imágenes de productos y fotos de comercios se integró **Cloudinary**:
-
-1. **Subida Eficiente (Stream sin disco):** Se utiliza `multer.memoryStorage()`. El archivo no se guarda en el disco del servidor, sino que se mantiene en un buffer en memoria RAM.
-2. **Transformación en la Nube:** La función auxiliar `uploadStream` envía los bytes directamente a la API de Cloudinary usando streams de Node.js:
-   ```javascript
-   const uploadStream = (buffer, options = {}) => {
-     return new Promise((resolve, reject) => {
-       const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
-         if (error) return reject(error);
-         resolve(result);
-       });
-       stream.end(buffer);
-     });
-   };
+1. **Archivo `.env` transparente:**
+   ```env
+   DB_DIALECT=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_USER=root
+   DB_PASSWORD=
+   DB_NAME=spotmarket
    ```
-3. **Optimización Automática:** Cloudinary entrega la imagen en formato WebP optimizado y con CDN global, acelerando la carga del frontend en cualquier dispositivo.
+2. **Auto-creación de Base de Datos:** Al iniciar el servidor, el helper `asegurarBaseDeDatosMySQL()` ejecuta la consulta SQL `CREATE DATABASE IF NOT EXISTS spotmarket CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`, por lo que no es necesario crear manualmente la base de datos en phpMyAdmin.
+3. **Sincronización:** Sequelize sincroniza automáticamente las tablas `usuarios`, `comercios`, `fotos_comercios`, `productos`, `ofertas` y `valoraciones`.
 
 ---
 
-## 6. Seguridad y Autenticación (JWT + HttpOnly Cookies)
+## 6. Gestión Multimedia (Almacenamiento Local + Cloudinary)
 
-El sistema de autenticación sigue las mejores prácticas enseñadas en la cátedra:
+Para evitar que las fotos no se vean o que el registro falle por caídas de internet o falta de credenciales de Cloudinary, se implementó el módulo [imageStorage.js](file:///home/fernandez/spot-market/backend/src/utils/imageStorage.js):
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Comerciante
-    participant React as Frontend React
-    participant API as Backend Express
-    participant DB as Base de Datos
-
-    Comerciante->>React: Ingresa email y contraseña
-    React->>API: POST /api/auth/login {email, password}
-    API->>DB: Busca Usuario por email
-    DB-->>API: Retorna hash bcrypt
-    API->>API: Compara hash con bcryptjs.compare()
-    API->>API: Firma JWT con usuario_id y rol
-    API-->>React: HTTP 200 + Set-Cookie: token=JWT; HttpOnly; SameSite=Lax
-    React->>React: Guarda flag isLogged=true en localStorage
-    React-->>Comerciante: Redirige al Panel del Comerciante
-    
-    Note over React,API: Peticiones autenticadas posteriores (CRUD)
-    React->>API: POST /api/productos (credentials: 'include')
-    Note right of React: El navegador adjunta la cookie token automáticamente
-    API->>API: Middleware auth verifica JWT
-    API->>DB: Registra nuevo producto
-    DB-->>API: OK
-    API-->>React: HTTP 201 Created
-```
-
-### Ventajas Pedagógicas:
-- **Protección contra ataques XSS:** Al guardar el token JWT en una cookie con flag `HttpOnly`, ningún script malicioso de JavaScript en el cliente puede robar el token de acceso.
-- **Simplicidad en React:** No es necesario pasar cabeceras `Authorization: Bearer ...` manualmente en cada fetch; con solo configurar `credentials: 'include'`, el navegador se encarga de la gestión del token.
+1. **Previsualización en Cliente:** En el momento en que el comerciante selecciona las fotos, `URL.createObjectURL(file)` muestra la miniatura al instante antes de enviar el formulario.
+2. **Guardado Seguro:**
+   - Si en `.env` están configuradas las claves de Cloudinary, la imagen se sube a la CDN en la nube.
+   - Si no están configuradas las claves o si no hay conexión a internet, la imagen se guarda de inmediato en la carpeta `backend/uploads/comercios/` o `backend/uploads/productos/`.
+3. **Servidor Estático:** Express sirve la ruta `/uploads` de modo que las fotos locales son accesibles inmediatamente desde el navegador (`http://localhost:4000/uploads/...`), garantizando que **todas las fotos se vean siempre**.
 
 ---
 
-## 7. Módulo Comerciante Desacoplado y Guía de Integración
+## 7. Seguridad y Autenticación (JWT + HttpOnly Cookies + Transacciones Atómicas)
 
-Para cumplir con el requerimiento de trabajar en equipo sin provocar conflictos de Git, se separó la vista del comerciante y la autenticación en el repositorio:
-📁 `/home/fernandez/spotmarket-modulo-comerciante`
-
-### Pasos para unificarlo a otro proyecto:
-1. Copiar la carpeta `src/components/auth/` y `src/components/comerciante/`.
-2. Copiar los hooks `useForm.js` y `useFetch.js`.
-3. Asegurar que las peticiones en `src/services/api.js` apunten al backend (`http://localhost:4000/api`) con `credentials: 'include'`.
-4. Importar el componente `PanelPage` o los submódulos (`GestionProductos`, `GestionOfertas`, `PerfilComercio`) según el enrutamiento del proyecto receptor.
+### Prevención del Error de Registro y "Correo ya registrado"
+En el controlador [authController.js](file:///home/fernandez/spot-market/backend/src/controllers/authController.js), el alta del comercio se ejecuta dentro de una **transacción atómica de Sequelize** (`sequelize.transaction()`):
+- Si ocurre algún error durante la carga de fotos o datos del local, se ejecuta automáticamente un `await t.rollback()`.
+- Esto garantiza que **nunca se cree un usuario huérfano** con el correo bloqueado, permitiendo al usuario corregir sus datos y volver a intentar de inmediato.
 
 ---
 
-## 8. Guion de Defensa Oral (20 Minutos - 4 Integrantes)
+## 8. Módulo Comerciante Desacoplado y Guía de Integración
+
+El repositorio independiente `/home/fernandez/spotmarket-modulo-comerciante` cuenta con:
+- `RegisterComercioForm`: Con tipo de comercio (Minorista / Mayorista), las 27 categorías de productos A-Z, mapa interactivo y previsualización de fotos.
+- `GestionProductos`: CRUD de catálogo con selector de categorías y carga de imágenes.
+- `PerfilComercio`: Canales de contacto y dirección física.
+- `GUIA_INTEGRACION.md`: Manual paso a paso para integrarlo en cualquier proyecto del equipo.
+
+---
+
+## 9. Guion de Defensa Oral (20 Minutos - 4 Integrantes)
 
 ### Estructura del Tiempo (5 minutos por integrante)
 
 | Integrante | Rol Temático | Contenido a Defender |
 | :--- | :--- | :--- |
-| **Integrante 1 (5 min)** | Introducción & Negocio | Problema que resuelve SpotMarket, delimitación de alcance (por qué sin pedidos ni chat), impacto local en Formosa. |
-| **Integrante 2 (5 min)** | Frontend & Experiencia | Arquitectura de componentes React, Vite, Tailwind de alto contraste, mapas interactivos con Leaflet, hooks `useFetch` y `useForm`. |
-| **Integrante 3 (5 min)** | Backend & Seguridad | Arquitectura Express, autenticación JWT con Cookies `HttpOnly`, middlewares de validación y control de errores centralizado. |
-| **Integrante 4 (5 min)** | Base de Datos & Demo en Vivo | Modelado en Sequelize, dualidad MySQL/SQLite, Cloudinary, y demostración en vivo del alta de un producto y visualización en el inicio. |
+| **Integrante 1 (5 min)** | Introducción & Negocio | Problema que resuelve SpotMarket, delimitación de alcance (por qué sin pedidos ni chat), minoristas vs mayoristas, impacto local en Formosa. |
+| **Integrante 2 (5 min)** | Frontend & Experiencia | Arquitectura React 18 + Vite, Tailwind de alto contraste, mapa interactivo con opción de Pantalla Completa, selector de 27 categorías A-Z y previsualización de fotos. |
+| **Integrante 3 (5 min)** | Backend & Seguridad | Arquitectura Express, autenticación JWT con Cookies `HttpOnly`, transacciones atómicas de Sequelize para prevenir fallos en registro y middlewares de validación. |
+| **Integrante 4 (5 min)** | Base de Datos & Demo en Vivo | Conexión con MySQL en XAMPP / phpMyAdmin, servidor de archivos multimedia estáticos `/uploads` + Cloudinary, y demostración en vivo (alta de producto, visualización en pantalla principal y botón WhatsApp). |
 
 ---
 
-### Guion Detallado Paso a Paso
+## 10. Preguntas Típicas de la Mesa Examinadora y Respuestas Modelo
 
-#### Minuto 0:00 - 5:00 — Integrante 1: Justificación del Proyecto y Modelo de Negocio
-> *"Buenas tardes, profesores y tribunal. Hoy les presentamos **SpotMarket**, una plataforma web diseñada específicamente para dinamizar la economía de cercanía en Formosa Capital.*  
->  
-> *Muchos pequeños comerciantes de barrio —como verdulerías, ferreterías o casas de repuestos— no cuentan con plataformas accesibles para mostrar sus precios, ofertas y facilidades de pago en cuotas. Por su parte, los vecinos caminan buscando precios o dependen de grupos informales.*  
->  
-> *Al analizar el problema, tomamos una decisión de arquitectura clave: **SpotMarket no es un e-commerce cerrado con carrito ni pasarelas de pago engorrosas**. En el comercio barrial, el vecino quiere ver el precio, saber si hay cuotas, ubicar el local en el mapa de su barrio y comunicarse al instante. Por eso reemplazamos el chat interno y los carritos por un enlace directo y verificado a WhatsApp y la ubicación exacta en el mapa.*  
->  
-> *Además, para proteger el comercio justo y evitar el desprestigio malintencionado entre competidores del mismo rubro, los comercios no reciben calificaciones como negocio; las reseñas y estrellas de 1 a 5 se asignan estrictamente a la calidad de los productos concretos."*
-
----
-
-#### Minuto 5:00 - 10:00 — Integrante 2: Frontend Moderno con React, Vite y Custom Hooks
-> *"En el frontend implementamos una arquitectura basada en **React 18** empaquetada con **Vite**, lo que nos brinda una experiencia de desarrollo sumamente ágil y tiempos de carga casi instantáneos.*  
->  
-> *Para el diseño visual nos enfocamos en una estética oscura de **alto contraste** —con fondos en `#070C16` y acentos en amarillo `#FFB800` y rojo `#EF4444`— que prioriza la legibilidad en pantallas móviles y monitores de cualquier gama.*  
->  
-> *A nivel de código, respetamos los principios pedagógicos vistos durante el cuatrimestre:*  
-> *1. Desarrollamos el hook personalizado `useForm` para encapsular la gestión de formularios controlados, captura de eventos `onChange` y validación de campos obligatorios.*  
-> *2. Desarrollamos el hook `useFetch`, que maneja de forma declarativa el estado de carga (`loading`), los datos recibidos y los errores, incorporando además `AbortController` para cancelar peticiones pendientes cuando un componente se desmonta, evitando fugas de memoria.*  
->  
-> *En la pantalla de inicio, reemplazamos la vista estática por secciones orientadas a la conversión:*  
-> *- **Ofertas de la semana**, calculando el porcentaje de ahorro real.*  
-> *- **Productos en cuotas sin interés**, una necesidad fundamental de los consumidores locales.*  
-> *- **Mapa interactivo de Formosa**, desarrollado con Leaflet y React-Leaflet, que muestra los comercios georreferenciados en barrios como San Martín, Don Bosco, San Francisco o Fontana."*
-
----
-
-#### Minuto 10:00 - 15:00 — Integrante 3: Backend RESTful, Seguridad JWT y Middlewares
-> *"El backend está construido sobre **Node.js y Express**, siguiendo el patrón arquitectónico Controlador-Ruta-Modelo.*  
->  
-> *La seguridad del sistema se diseñó bajo estándares de la industria:*  
-> *- Las contraseñas de comerciantes y usuarios nunca se guardan en texto plano; son procesadas con **bcryptjs** mediante un factor de costo de 10 rondas de hashing y salting.*  
-> *- Para la sesión utilizamos **JSON Web Tokens (JWT)**. A diferencia de implementaciones que guardan el token en `localStorage` —exponiéndolo a ataques de Cross-Site Scripting (XSS)—, en SpotMarket el token se envía en una cookie con la directiva **HttpOnly** y **SameSite=Lax**.*  
->  
-> *Esto significa que el navegador administra la cookie de forma nativa. En el frontend simplemente configuramos `credentials: 'include'` en el cliente nativo de `fetch`, y en cada petición el middleware `auth.js` verifica la firma criptográfica del token, extrayendo el ID del usuario y su rol.*  
->  
-> *Asimismo, centralizamos el manejo de errores en un middleware global y protegemos las rutas con validadores declarativos de `express-validator` para asegurar que ningún dato inválido llegue a la base de datos."*
-
----
-
-#### Minuto 15:00 - 20:00 — Integrante 4: Sequelize, Cloudinary y Demostración en Vivo
-> *"Para la capa de persistencia utilizamos el ORM **Sequelize**. Diseñamos un modelo relacional limpio que incluye Comercios, Productos, Ofertas temporales, Valoraciones y Favoritos.*  
->  
-> *Un aspecto diferencial de nuestro backend es la **resiliencia dual**: está configurado para conectarse primariamente a **MySQL 8.0**, pero si por cualquier eventualidad el servicio de MySQL no estuviera disponible en el entorno de despliegue, el archivo de configuración realiza un fallback automático a una base embebida **SQLite**, garantizando que la aplicación continúe operando sin caídas.*  
->  
-> *Para los archivos multimedia, implementamos la integración con **Cloudinary**. Cuando el comerciante sube la foto de un producto, la imagen no toca el disco del servidor: utilizamos `multer.memoryStorage()` y enviamos el buffer por stream a la nube, guardando en la base de datos únicamente la URL segura optimizada en formato WebP.*  
->  
-> *(Pasa a la demostración en pantalla)*:  
-> *1. Iniciamos sesión como 'Almacén Don Pepe'.*  
-> *2. Vamos a 'Nuevo Producto', cargamos 'Yerba Mate Premium 1kg', indicamos precio regular de \$3.500 y oferta de \$2.800 en 3 cuotas.*  
-> *3. Subimos la foto y guardamos. Vemos cómo el producto aparece al instante en el dashboard.*  
-> *4. Abrimos la pantalla principal de SpotMarket: el producto ya figura en las 'Ofertas de la semana' y en 'Productos en cuotas'. Al tocar el botón de WhatsApp, se abre la conversación con el mensaje prearmado listando el producto.*  
->  
-> *Con esto demostramos la integración completa entre Frontend, Backend, Base de Datos y Multimedia. Quedamos a disposición del tribunal para responder sus preguntas. Muchas gracias."*
-
----
-
-## 9. Preguntas Típicas de la Mesa Examinadora y Respuestas Modelo
-
-### Pregunta 1: *"¿Por qué decidieron no usar Axios ni librerías de estado global como Redux?"*
+### Pregunta 1: *"¿Por qué usan MySQL y cómo gestionaron la conexión en el proyecto?"*
 > **Respuesta:**  
-> *"Decidimos no utilizar Axios porque la API nativa `fetch` de los navegadores modernos resuelve todas nuestras necesidades sin añadir peso innecesario al bundle final. Además, al configurar `credentials: 'include'`, el envío de cookies HttpOnly es transparente. Respecto a Redux, para el alcance de SpotMarket el estado se gestiona de forma limpia y predecible mediante composición de componentes y los Custom Hooks `useFetch` y `useForm`, respetando la consigna pedagógica de mantener el código legible y sin sobreingeniería."*
+> *"Utilizamos MySQL 8.0 a través de Sequelize ORM y el driver `mysql2`. Todas las credenciales se administran mediante un archivo estándar `.env` compatible con el entorno XAMPP y phpMyAdmin. Además, implementamos una rutina que verifica y crea automáticamente la base de datos `spotmarket` si no existe, garantizando que el servidor levante sin errores de configuración."*
 
-### Pregunta 2: *"¿Cómo evitaron que un comerciante modifique productos de otro comercio?"*
+### Pregunta 2: *"¿Por qué dividieron los comercios en Minorista y Mayorista?"*
 > **Respuesta:**  
-> *"En el backend, en el controlador `productoController.js`, cada vez que se ejecuta un `PUT` o `DELETE`, no solo buscamos el producto por su `id`, sino que verificamos que el `comercio_id` asociado coincida con el comercio perteneciente al `usuario_id` extraído del token JWT verificado en el middleware de autenticación. Si no coinciden, el servidor rechaza la operación inmediatamente con un código HTTP `403 Forbidden`."*
+> *"Porque en la economía barrial de Formosa conviven el pequeño almacén que vende por unidad al vecino y las distribuidoras o comercios mayoristas que ofrecen precios diferenciales por bulto o cantidad. Permitir esta distinción clarifica las expectativas de compra del consumidor."*
 
-### Pregunta 3: *"¿Por qué las calificaciones son sobre productos y no sobre el comercio?"*
+### Pregunta 3: *"¿Cómo aseguran que las fotos se visualicen si no hay conexión a internet para Cloudinary?"*
 > **Respuesta:**  
-> *"El objetivo social de SpotMarket es apoyar al comercio de barrio formoseño. Las calificaciones a nivel de comercio suelen ser subjetivas o vulnerables a sabotajes entre locales vecinos. En cambio, calificar el producto específico (su calidad, frescura o relación precio-calidad) aporta información objetiva y útil a otros consumidores sin penalizar injustamente el negocio en su totalidad."*
+> *"Diseñamos un gestor híbrido en `imageStorage.js`. Si las credenciales de Cloudinary están presentes y hay conexión, utiliza la nube; de lo contrario, almacena el archivo en la carpeta local `/uploads/` del servidor y Express la sirve como estático. Así garantizamos que las imágenes siempre se muestren tanto en desarrollo local como en la nube."*
 
-### Pregunta 4: *"¿Cómo funciona el cálculo de distancia en el mapa?"*
+### Pregunta 4: *"¿Cómo evitaron que un error en el registro deje el correo bloqueado?"*
 > **Respuesta:**  
-> *"Implementamos la fórmula matemática del Haversine en la utilidad `haversine.js`. A partir de las coordenadas de latitud y longitud del comercio y la posición del usuario (obtenida mediante la Geolocation API del navegador), se calcula la distancia ortodrómica en kilómetros sobre la superficie esférica de la Tierra, permitiendo ordenar los comercios por cercanía."*
+> *"Implementamos transacciones atómicas con Sequelize (`sequelize.transaction`). Toda la operación (creación del usuario, registro del comercio y asociación de fotos) se ejecuta como una sola unidad indivisible. Si cualquier paso falla, se ejecuta un rollback completo y la base de datos regresa a su estado previo sin dejar registros inconsistentes."*

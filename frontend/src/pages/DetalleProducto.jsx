@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { resolverUrlImagen } from '../utils/imageUrl.js';
 
 export default function DetalleProducto() {
   const { id } = useParams();
@@ -24,7 +25,19 @@ export default function DetalleProducto() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="grid md:grid-cols-2 gap-8">
-        <div>{p.imagen_url ? <img src={p.imagen_url} alt={p.nombre} className="rounded-xl w-full object-cover" /> : <div className="h-64 rounded-xl bg-white/5" />}</div>
+        <div>
+          {p.imagen_url ? (
+            <img
+              src={resolverUrlImagen(p.imagen_url)}
+              alt={p.nombre}
+              className="rounded-xl w-full object-cover max-h-96"
+            />
+          ) : (
+            <div className="h-64 rounded-xl bg-white/5 flex items-center justify-center text-4xl">
+              📦
+            </div>
+          )}
+        </div>
         <div>
           <h1 className="text-3xl font-bold">{p.nombre}</h1>
           <p className="text-gray-400 mt-1">{p.comercio?.nombre_local} · {p.comercio?.direccion}</p>

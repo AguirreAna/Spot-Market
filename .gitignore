@@ -5,13 +5,14 @@ node_modules/
 dist/
 build/
 
-# Variables de entorno
-.env
+# Variables de entorno locales
 .env.local
+!.env.example
+!backend/.env
+!backend/.env.example
 
-# Datos locales y archivos subidos
+# Datos locales y archivos subidos temporales
 backend/data/
-backend/uploads/
 *.sqlite
 
 # Logs
