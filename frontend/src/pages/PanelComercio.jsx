@@ -103,7 +103,7 @@ export default function PanelComercio() {
             {comercio?.nombre_local || usuario?.nombre_local || 'Mi Comercio'}
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            📍 {comercio?.direccion || 'Formosa Capital'} {comercio?.telefono ? `· 📞 ${comercio.telefono}` : ''}
+            {comercio?.direccion || 'Formosa Capital'} {comercio?.telefono ? `· 📞 ${comercio.telefono}` : ''}
           </p>
         </div>
 

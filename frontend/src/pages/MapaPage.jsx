@@ -74,7 +74,7 @@ export default function MapaPage() {
                   <div className="p-1 text-black">
                     <p className="font-bold text-sm text-red-600">{c.nombre_local}</p>
                     <p className="text-xs text-gray-700 font-semibold uppercase">{c.tipo_comercio || 'Minorista'}</p>
-                    <p className="text-xs text-gray-800 mt-1">📍 {c.direccion}</p>
+                    <p className="text-xs text-gray-800 mt-1">{c.direccion}</p>
                     {c.distancia != null && <p className="text-xs text-blue-600 font-medium mt-1">A {c.distancia} km</p>}
                   </div>
                 </Popup>
@@ -89,7 +89,7 @@ export default function MapaPage() {
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span>📍</span> Mapa de Formosa Capital — Pantalla Completa
+                Mapa de Formosa Capital — Pantalla Completa
               </h2>
               <p className="text-xs text-gray-400">
                 Mostrando todos los comercios barriales registrados.
@@ -114,7 +114,7 @@ export default function MapaPage() {
                       <div className="p-1 text-black">
                         <p className="font-bold text-sm text-red-600">{c.nombre_local}</p>
                         <p className="text-xs text-gray-700 font-semibold uppercase">{c.tipo_comercio || 'Minorista'}</p>
-                        <p className="text-xs text-gray-800 mt-1">📍 {c.direccion}</p>
+                        <p className="text-xs text-gray-800 mt-1">{c.direccion}</p>
                         {c.distancia != null && <p className="text-xs text-blue-600 font-medium mt-1">A {c.distancia} km</p>}
                       </div>
                     </Popup>

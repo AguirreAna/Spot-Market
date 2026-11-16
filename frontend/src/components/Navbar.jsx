@@ -73,22 +73,10 @@ export default function Navbar() {
               📊 Mi Panel Comerciante
             </Link>
             <Link
-              to="/panel?tab=Productos"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition"
-            >
-              📦 Catálogo
-            </Link>
-            <Link
-              to="/panel?tab=Ofertas"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition"
-            >
-              🏷️ Ofertas
-            </Link>
-            <Link
               to="/mapa"
               className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition"
             >
-              📍 Ver en Mapa
+              Ver en Mapa
             </Link>
           </nav>
         ) : (

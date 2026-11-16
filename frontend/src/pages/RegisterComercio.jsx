@@ -405,7 +405,7 @@ export default function RegisterComercio() {
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span>📍</span> Elegí la ubicación de tu local en Formosa Capital
+                Elegí la ubicación de tu local en Formosa Capital
               </h2>
               <p className="text-xs text-gray-400">
                 Hacé click en cualquier calle o barrio para marcar la coordenada exacta.

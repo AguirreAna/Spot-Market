@@ -21,9 +21,9 @@ L.Icon.Default.mergeOptions({
 
 const pinRojoIcon = L.divIcon({
   className: 'custom-pin',
-  html: `<div style="background-color: #EF4444; width: 28px; height: 28px; border-radius: 50%; border: 3px solid #FFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-size: 13px;">📍</div>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 28]
+  html: `<div style="background-color: #EF4444; width: 26px; height: 26px; border-radius: 50%; border: 3px solid #FFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"><div style="width: 8px; height: 8px; background-color: #FFF; border-radius: 50%;"></div></div>`,
+  iconSize: [26, 26],
+  iconAnchor: [13, 26]
 });
 
 const CATEGORIAS = CATEGORIAS_PRODUCTOS;
@@ -101,7 +101,7 @@ export default function Inicio() {
                 to="/mapa"
                 className="bg-[#FFB800] hover:bg-[#FFA500] text-black font-bold px-6 py-3 rounded-full text-sm shadow-lg transition-transform hover:scale-105 inline-flex items-center gap-2"
               >
-                <span>📍</span> Ver comercios en el mapa
+                Ver comercios en el mapa
               </Link>
               <Link
                 to="/productos"
@@ -134,7 +134,7 @@ export default function Inicio() {
                         <div className="p-1 text-black">
                           <p className="font-bold text-sm text-red-600">{com.nombre_local}</p>
                           <p className="text-xs text-gray-600">{com.tipo_comercio}</p>
-                          <p className="text-xs text-gray-800 font-medium mt-1">📍 {com.direccion}</p>
+                          <p className="text-xs text-gray-800 font-medium mt-1">{com.direccion}</p>
                           <Link
                             to={`/productos?comercio=${com.id}`}
                             className="mt-2 inline-block text-[11px] bg-red-600 text-white font-bold px-2 py-1 rounded"
@@ -157,7 +157,7 @@ export default function Inicio() {
                   <span>⛶</span> Agrandar mapa
                 </button>
                 <div className="bg-[#0B111E]/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/10 text-xs font-semibold text-[#FFB800] shadow-md hidden sm:flex items-center gap-1.5">
-                  <span>📍</span> Formosa Capital en vivo
+                  Formosa Capital en vivo
                 </div>
               </div>
             </div>
@@ -171,19 +171,19 @@ export default function Inicio() {
           {[1, 2, 3].map((k) => (
             <div key={k} className="flex items-center gap-8">
               <span className="flex items-center gap-1.5 hover:text-[#FFB800] cursor-default">
-                <span className="text-red-500">📍</span> Subí tus productos
+                <span className="text-[#FFB800]">●</span> Subí tus productos
               </span>
               <span className="flex items-center gap-1.5 hover:text-[#FFB800] cursor-default">
-                <span className="text-red-500">📍</span> Decidí con información
+                <span className="text-[#FFB800]">●</span> Decidí con información
               </span>
               <span className="flex items-center gap-1.5 hover:text-[#FFB800] cursor-default">
-                <span className="text-red-500">📍</span> Compará precios
+                <span className="text-[#FFB800]">●</span> Compará precios
               </span>
               <span className="flex items-center gap-1.5 hover:text-[#FFB800] cursor-default">
-                <span className="text-red-500">📍</span> Encontrá comercios cerca
+                <span className="text-[#FFB800]">●</span> Encontrá comercios cerca
               </span>
               <span className="flex items-center gap-1.5 hover:text-[#FFB800] cursor-default">
-                <span className="text-red-500">📍</span> Mirá todo en el mapa
+                <span className="text-[#FFB800]">●</span> Mirá todo en el mapa
               </span>
             </div>
           ))}
@@ -285,7 +285,7 @@ export default function Inicio() {
                     )}
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
-                    <span className="text-blue-400 font-medium">📍 1,2 km</span>
+                    <span className="text-blue-400 font-medium">1,2 km</span>
                     <span className="text-red-400 font-medium">♥ {prod.likes || 45}</span>
                   </div>
                 </div>
@@ -415,7 +415,7 @@ export default function Inicio() {
                   )}
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
-                  <span className="text-blue-400">📍 400 m</span>
+                  <span className="text-blue-400">400 m</span>
                   <span className="text-red-400">♥ {p.likes || 39}</span>
                 </div>
               </div>
@@ -511,7 +511,7 @@ export default function Inicio() {
                   )}
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-white/5">
-                  <span className="text-blue-400 font-medium">📍 600 m</span>
+                  <span className="text-blue-400 font-medium">600 m</span>
                   <span className="text-red-400 font-medium">♥ {prod.likes || 63}</span>
                 </div>
               </div>
@@ -564,7 +564,6 @@ export default function Inicio() {
           {/* Columna Marca & Redes */}
           <div className="col-span-2 space-y-3">
             <div className="flex items-center gap-2 font-black text-lg">
-              <span className="text-red-500">📍</span>
               <span className="text-white">Spot</span>
               <span className="text-[#FFB800]">Market</span>
             </div>
@@ -631,7 +630,7 @@ export default function Inicio() {
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span>📍</span> Mapa en vivo de Formosa Capital — Comercios de Barrio
+                Mapa en vivo de Formosa Capital — Comercios de Barrio
               </h2>
               <p className="text-xs text-gray-400">
                 Mostrando {comercios.length} comercios de cercanía geolocalizados.
@@ -664,7 +663,7 @@ export default function Inicio() {
                       <div className="p-1 text-black">
                         <p className="font-bold text-sm text-red-600">{com.nombre_local}</p>
                         <p className="text-xs text-gray-600 uppercase font-semibold">{com.tipo_comercio || 'Minorista'}</p>
-                        <p className="text-xs text-gray-800 font-medium mt-1">📍 {com.direccion}</p>
+                        <p className="text-xs text-gray-800 font-medium mt-1">{com.direccion}</p>
                         <Link
                           to={`/productos?comercio=${com.id}`}
                           className="mt-2 inline-block text-[11px] bg-red-600 text-white font-bold px-2 py-1 rounded"
