@@ -36,6 +36,14 @@ export const Comercio = sequelize.define(
       type: DataTypes.STRING(40),
       allowNull: true
     },
+    whatsapp: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
+    horario_atencion: {
+      type: DataTypes.STRING(120),
+      allowNull: true
+    },
     email: {
       type: DataTypes.STRING(160),
       allowNull: true,

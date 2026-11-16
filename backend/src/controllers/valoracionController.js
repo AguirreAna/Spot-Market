@@ -1,5 +1,4 @@
-// Controlador de valoraciones: crear (usuario logueado), listar por producto,
-// y resumen para el panel del comerciante (promedio + comentarios recibidos).
+// Controlador de valoraciones: crear (consumidor), listar por producto y resumen del comercio con comentarios.
 import { matchedData } from 'express-validator';
 import { db } from '../models/index.js';
 import { obtenerComercioDelUsuario } from '../utils/propiedad.js';
@@ -36,7 +35,7 @@ export const resumenMiComercio = async (req, res, next) => {
 
     const productos = await Producto.findAll({
       where: { comercioId: comercio.id },
-      attributes: ['id'],
+      attributes: ['id', 'nombre', 'precio', 'imagen_url', 'categoria'],
       include: [
         {
           model: Valoracion,
@@ -47,8 +46,14 @@ export const resumenMiComercio = async (req, res, next) => {
     });
 
     const valoraciones = productos.flatMap((p) =>
-      p.valoraciones.map((v) => ({ ...v.toJSON(), productoId: p.id }))
+      p.valoraciones.map((v) => ({
+        ...v.toJSON(),
+        productoId: p.id,
+        productoNombre: p.nombre,
+        productoImagen: p.imagen_url
+      }))
     );
+
     const promedio =
       valoraciones.length > 0
         ? Math.round(

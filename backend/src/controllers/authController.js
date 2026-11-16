@@ -1,6 +1,5 @@
 // Controlador de autenticación de SpotMarket.
-// Maneja registro (usuario/comerciante), login, logout y sesión actual.
-// El JWT se guarda en una cookie httpOnly para máxima seguridad.
+// Maneja registro (usuario/comerciante), login, logout y sesión actual (/me).
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { matchedData } from 'express-validator';
@@ -25,8 +24,12 @@ const datosUsuarioPublicos = (usuario) => ({
 
 export const registrar = async (req, res, next) => {
   try {
-    const data = matchedData(req);
-    const email = data.email.toLowerCase();
+    const data = { ...req.body, ...matchedData(req) };
+    const email = (data.email || '').toLowerCase().trim();
+
+    if (!email) {
+      return res.status(400).json({ ok: false, mensaje: 'El correo electrónico es obligatorio.' });
+    }
 
     const existe = await Usuario.findOne({ where: { email } });
     if (existe) {
@@ -55,12 +58,27 @@ export const registrar = async (req, res, next) => {
 };
 
 export const registrarComercio = async (req, res, next) => {
-  // Transacción Sequelize atómica: si algo falla, no queda creado el usuario huérfano.
+  // Transacción atómica: si cualquier paso falla, se revierte y no queda correo bloqueado
   const t = await sequelize.transaction();
 
   try {
-    const data = matchedData(req);
-    const email = data.email.toLowerCase();
+    const data = { ...req.body, ...matchedData(req) };
+    const email = (data.email || '').toLowerCase().trim();
+
+    if (!email) {
+      await t.rollback();
+      return res.status(400).json({ ok: false, mensaje: 'El correo electrónico es obligatorio.' });
+    }
+
+    if (!data.password || data.password.length < 6) {
+      await t.rollback();
+      return res.status(400).json({ ok: false, mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    if (!data.nombre_local) {
+      await t.rollback();
+      return res.status(400).json({ ok: false, mensaje: 'El nombre del local comercial es obligatorio.' });
+    }
 
     const existe = await Usuario.findOne({ where: { email }, transaction: t });
     if (existe) {
@@ -68,11 +86,11 @@ export const registrarComercio = async (req, res, next) => {
       return res.status(409).json({ ok: false, mensaje: 'El correo ya está registrado.' });
     }
 
-    // 1. Crear el usuario con rol comerciante
+    // 1. Crear el usuario
     const hash = await bcrypt.hash(data.password, 10);
     const usuario = await Usuario.create(
       {
-        nombre: data.nombre,
+        nombre: data.nombre || data.nombre_local,
         email,
         password: hash,
         rol: 'comerciante'
@@ -80,16 +98,17 @@ export const registrarComercio = async (req, res, next) => {
       { transaction: t }
     );
 
-    // 2. Normalizar categorías de productos
-    const rawCategorias = req.body.categoria_productos || req.body.tipos_productos || data.categoria_productos || data.tipos_productos;
+    // 2. Normalizar categorías
+    const rawCategorias = data.categoria_productos || data.tipos_productos || req.body.categoria_productos || req.body.tipos_productos;
     const categoriaProductos = Array.isArray(rawCategorias)
       ? rawCategorias.join(', ')
-      : rawCategorias || null;
+      : (rawCategorias ? String(rawCategorias) : 'Almacén');
 
-    // Normalizar tipo de comercio a minorista o mayorista
-    const tipoComercio = (data.tipo_comercio || 'minorista').toString().toLowerCase().trim();
+    // 3. Normalizar tipo de comercio
+    const rawTipo = data.tipo_comercio || req.body.tipo_comercio || 'Minorista';
+    const tipoComercio = String(rawTipo).trim();
 
-    // 3. Crear el comercio asociado
+    // 4. Crear el comercio
     const comercio = await Comercio.create(
       {
         nombre_local: data.nombre_local,
@@ -97,24 +116,26 @@ export const registrarComercio = async (req, res, next) => {
         categoria_productos: categoriaProductos,
         tipos_productos: categoriaProductos,
         telefono: data.telefono || null,
+        whatsapp: data.whatsapp || data.telefono || null,
+        horario_atencion: data.horario_atencion || 'Lunes a Sábado 8:00 - 21:00',
         email,
-        direccion: data.direccion || null,
-        latitud: data.latitud || null,
-        longitud: data.longitud || null,
+        direccion: data.direccion || 'Formosa Capital',
+        latitud: data.latitud ? parseFloat(data.latitud) : -26.1849,
+        longitud: data.longitud ? parseFloat(data.longitud) : -58.1731,
         usuarioId: usuario.id
       },
       { transaction: t }
     );
 
-    // 4. Guardar fotos de fachada/local (con fallback local automático para que se vean siempre)
+    // 5. Guardar fotos de fachada si se adjuntaron
     const archivos = req.files || [];
     for (const archivo of archivos) {
-      const subida = await guardarImagen(archivo, 'comercios');
-      if (subida && subida.url) {
+      const guardada = await guardarImagen(archivo, 'comercios');
+      if (guardada && guardada.url) {
         await FotoComercio.create(
           {
-            url: subida.url,
-            public_id: subida.public_id,
+            url: guardada.url,
+            public_id: guardada.public_id,
             comercioId: comercio.id
           },
           { transaction: t }
@@ -134,7 +155,8 @@ export const registrarComercio = async (req, res, next) => {
         ...datosUsuarioPublicos(usuario),
         comercioId: comercio.id,
         nombre_local: comercio.nombre_local,
-        tipo_comercio: comercio.tipo_comercio
+        tipo_comercio: comercio.tipo_comercio,
+        comercio
       }
     });
   } catch (error) {
@@ -146,10 +168,13 @@ export const registrarComercio = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = matchedData(req);
+    const data = { ...req.body, ...matchedData(req) };
+    const email = (data.email || '').toLowerCase().trim();
+    const password = data.password;
+
     const usuario = await Usuario.findOne({
-      where: { email: email.toLowerCase() },
-      include: [{ model: Comercio, as: 'comercio', attributes: ['id', 'nombre_local', 'tipo_comercio'] }]
+      where: { email },
+      include: [{ model: Comercio, as: 'comercio' }]
     });
 
     if (!usuario || !(await bcrypt.compare(password, usuario.password))) {
@@ -159,12 +184,13 @@ export const login = async (req, res, next) => {
     const token = generarToken(usuario);
     res.cookie(NOMBRE_COOKIE_JWT, token, cookieJwtOpciones());
 
-    const payload = { ...datosUsuarioPublicos(usuario) };
-    if (usuario.comercio) {
-      payload.comercioId = usuario.comercio.id;
-      payload.nombre_local = usuario.comercio.nombre_local;
-      payload.tipo_comercio = usuario.comercio.tipo_comercio;
-    }
+    const payload = {
+      ...datosUsuarioPublicos(usuario),
+      comercioId: usuario.comercio ? usuario.comercio.id : null,
+      nombre_local: usuario.comercio ? usuario.comercio.nombre_local : null,
+      tipo_comercio: usuario.comercio ? usuario.comercio.tipo_comercio : null,
+      comercio: usuario.comercio
+    };
 
     return res.status(200).json({ ok: true, mensaje: 'Inicio de sesión correcto.', usuario: payload });
   } catch (error) {
@@ -185,12 +211,24 @@ export const me = async (req, res, next) => {
         {
           model: Comercio,
           as: 'comercio',
-          attributes: ['id', 'nombre_local', 'tipo_comercio', 'categoria_productos', 'tipos_productos', 'direccion', 'telefono']
+          include: [{ model: FotoComercio, as: 'fotos' }]
         }
       ]
     });
     if (!usuario) return res.status(404).json({ ok: false, mensaje: 'Usuario no encontrado.' });
-    return res.json({ ok: true, usuario });
+
+    const payload = {
+      id: usuario.id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol,
+      comercioId: usuario.comercio ? usuario.comercio.id : null,
+      nombre_local: usuario.comercio ? usuario.comercio.nombre_local : null,
+      tipo_comercio: usuario.comercio ? usuario.comercio.tipo_comercio : null,
+      comercio: usuario.comercio
+    };
+
+    return res.json({ ok: true, usuario: payload });
   } catch (error) {
     next(error);
   }
