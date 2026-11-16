@@ -16,7 +16,7 @@ export const validarRegistroComercio = [
   body('tipo_comercio')
     .trim()
     .notEmpty()
-    .withMessage('Seleccioná el tipo de comercio (minorista o mayorista).'),
+    .withMessage('Seleccioná el tipo de comercio.'),
   body('categoria_productos').optional({ values: 'falsy' }),
   body('tipos_productos').optional({ values: 'falsy' }),
   body('telefono').optional({ values: 'falsy' }).isString(),

@@ -55,7 +55,7 @@ export default function RegisterComercio() {
   const [form, setForm] = useState({
     nombre: '',
     nombre_local: '',
-    tipo_comercio: 'Minorista',
+    tipo_comercio: TIPOS_COMERCIO[4] || 'Pymes y comercios de barrio',
     telefono: '',
     email: '',
     password: '',
@@ -456,13 +456,13 @@ export default function RegisterComercio() {
                 </div>
               </div>
 
-              {/* 27 CATEGORÍAS DE PRODUCTOS */}
+              {/* RUBROS DEL COMERCIO */}
               <div className="mt-5 pt-4 border-t border-borde">
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-[11px] font-bold uppercase text-amarillo">
-                    Categoría de productos ({categoriasSeleccionadas.length} seleccionadas)
+                    Rubros ({categoriasSeleccionadas.length} seleccionados)
                   </label>
-                  <span className="text-[10px] text-gris-azulado">27 opciones en orden alfabético</span>
+                  <span className="text-[10px] text-gris-azulado">Opciones en orden alfabético</span>
                 </div>
                 <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 rounded-xl bg-negro/50 border border-borde">
                   {CATEGORIAS_PRODUCTOS.map((cat) => {

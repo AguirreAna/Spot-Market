@@ -1,17 +1,15 @@
-// Navbar oficial SpotMarket — Estilo y tipografía inspirados en Daiana45/proyect
-// Categorías a la izquierda del logo con despliegue hacia abajo, sin iconos, y selector de Modo Oscuro / Claro.
+// Navbar oficial SpotMarket — Estilo, tipografía y mega-menú de categorías idénticos a la referencia.
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import LogoNavbar from '../assets/LogoNavbar.svg';
-import { CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
+import MenuCategorias from './MenuCategorias.jsx';
 
 export default function Navbar() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const [menuCatAbierto, setMenuCatAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState('');
-  const menuRef = useRef(null);
   const inputRef = useRef(null);
 
   // Modo Oscuro / Claro
@@ -38,17 +36,6 @@ export default function Navbar() {
     setTema((prev) => (prev === 'oscuro' ? 'claro' : 'oscuro'));
   };
 
-  // Cerrar menú al hacer clic afuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuCatAbierto(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   // Atajo Ctrl + K para enfocar el buscador
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -63,77 +50,47 @@ export default function Navbar() {
 
   const handleBuscar = (e) => {
     e.preventDefault();
-    if (busqueda.trim()) {
-      navigate(`/productos?q=${encodeURIComponent(busqueda.trim())}`);
-    } else {
-      navigate('/productos');
-    }
-  };
-
-  const seleccionarCategoria = (cat) => {
     setMenuCatAbierto(false);
-    if (cat === 'Todas') {
-      navigate('/productos');
+    if (busqueda.trim()) {
+      navigate(`/productos?buscar=${encodeURIComponent(busqueda.trim())}`);
     } else {
-      navigate(`/productos?categoria=${encodeURIComponent(cat)}`);
+      navigate('/productos');
     }
   };
 
   const esComerciante = usuario?.rol === 'comerciante';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-negro/90 backdrop-blur-md transition-all duration-300">
-      <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:px-8 justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-negro/95 backdrop-blur-md transition-all duration-300">
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:px-8 justify-between">
         
-        {/* PARTE IZQUIERDA: CATEGORÍAS A LA IZQUIERDA DEL LOGO */}
+        {/* PARTE IZQUIERDA: LOGO + BOTÓN CATEGORÍAS */}
         <div className="flex items-center gap-3">
-          {/* 1. Botón Categorías (a la izquierda del logo, se abre hacia abajo) */}
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuCatAbierto((prev) => !prev)}
-              aria-expanded={menuCatAbierto}
-              className={`flex shrink-0 cursor-pointer items-center rounded-md border px-3 py-1.5 text-xs font-bold transition active:scale-95 ${
-                menuCatAbierto ? 'border-amarillo text-amarillo' : 'border-borde text-blanco hover:border-gris-azulado'
-              }`}
-            >
-              Categorías
-            </button>
-
-            {menuCatAbierto && (
-              <div className="absolute left-0 top-full mt-2 w-72 rounded-xl bg-gris-oscuro border border-borde shadow-2xl py-2 z-50">
-                <div className="px-4 py-2 text-xs font-bold text-amarillo uppercase tracking-wider border-b border-borde/60 flex items-center justify-between">
-                  <span>Categorías A-Z</span>
-                  <span className="text-[10px] text-gris-azulado">27 rubros</span>
-                </div>
-                <div className="max-h-80 overflow-y-auto divide-y divide-borde/30">
-                  <button
-                    onClick={() => seleccionarCategoria('Todas')}
-                    className="w-full text-left px-4 py-2 text-xs text-blanco hover:bg-amarillo hover:text-negro font-bold transition-colors"
-                  >
-                    Ver Todo el Catálogo
-                  </button>
-                  {CATEGORIAS_PRODUCTOS.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => seleccionarCategoria(cat)}
-                      className="w-full text-left px-4 py-2 text-xs text-gris-azulado hover:text-blanco hover:bg-negro/50 transition-colors"
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 2. Logo oficial SpotMarket (a la derecha de categorías) */}
-          <Link to="/" aria-label="SpotMarket - Inicio" className="shrink-0 flex items-center gap-2">
-            <img src={LogoNavbar} alt="" className="h-10 w-10 shrink-0 object-contain" />
+          {/* Logo oficial SpotMarket */}
+          <Link to="/" onClick={() => setMenuCatAbierto(false)} aria-label="SpotMarket - Inicio" className="shrink-0 flex items-center gap-2">
+            <img src={LogoNavbar} alt="" className="h-9 w-9 shrink-0 object-contain" />
             <span className="font-marca text-2xl text-blanco tracking-wide">
               Spot<span className="text-amarillo">Market</span>
             </span>
           </Link>
+
+          {/* Botón Categorías */}
+          <button
+            type="button"
+            onClick={() => setMenuCatAbierto((prev) => !prev)}
+            aria-expanded={menuCatAbierto}
+            className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-bold transition active:scale-95 ${
+              menuCatAbierto ? 'border-amarillo text-amarillo' : 'border-borde text-blanco hover:border-gris-azulado'
+            }`}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+            </svg>
+            <span className="hidden text-xs sm:inline">Categorías</span>
+          </button>
         </div>
 
         {/* Buscador central */}
@@ -145,7 +102,7 @@ export default function Navbar() {
                 type="search"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Buscar productos o comercios..."
+                placeholder="Buscar productos o tiendas..."
                 className="min-w-0 flex-1 bg-transparent pr-16 text-xs text-blanco placeholder:text-gris-azulado focus:outline-none"
               />
               <kbd aria-hidden="true" className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 rounded border border-borde bg-negro px-1.5 py-0.5 text-[10px] text-gris-azulado hidden sm:inline">
@@ -154,9 +111,12 @@ export default function Navbar() {
               <button
                 type="submit"
                 aria-label="Buscar"
-                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-xs font-bold text-rojo hover:brightness-125 transition"
+                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-rojo hover:brightness-125 transition"
               >
-                Buscar
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
               </button>
             </div>
           </form>
@@ -164,13 +124,24 @@ export default function Navbar() {
 
         {/* Sesión, Modo Oscuro/Claro y Navegación Derecha */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Botón selector de Modo Oscuro / Claro */}
+          {/* Botón selector de Modo Oscuro / Claro con icono de Sol/Luna */}
           <button
             type="button"
             onClick={alternarTema}
-            className="shrink-0 rounded-md border border-borde px-2.5 py-1.5 text-xs font-semibold text-gris-azulado hover:text-blanco hover:border-blanco transition cursor-pointer"
+            aria-label={`Cambiar a tema ${tema === 'oscuro' ? 'claro' : 'oscuro'}`}
+            className="shrink-0 cursor-pointer rounded-full p-2 text-gris-azulado transition hover:text-amarillo"
+            title={tema === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
           >
-            {tema === 'oscuro' ? 'Modo Claro' : 'Modo Oscuro'}
+            {tema === 'oscuro' ? (
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="5" />
+                <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
           </button>
 
           {usuario ? (
@@ -212,6 +183,11 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {/* MEGA MENÚ DESPLEGABLE HACIA ABAJO */}
+      {menuCatAbierto && (
+        <MenuCategorias cerrar={() => setMenuCatAbierto(false)} />
+      )}
     </header>
   );
 }

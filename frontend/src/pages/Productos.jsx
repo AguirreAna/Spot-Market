@@ -1,187 +1,303 @@
-// Catálogo público de SpotMarket: búsqueda, filtro por 27 categorías A-Z, orden por precio
-// y sincronización bidireccional reactiva con la URL (?categoria=...&q=...).
-import { useMemo, useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+// Catálogo de Productos y Tiendas de SpotMarket Formosa Capital
+// Con panel lateral de filtros (Tipo de Comercio y Rubros) y tarjetas horizontales.
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
-import { CATEGORIAS_PRODUCTOS } from '../constants/categorias.js';
-import { resolverUrlImagen } from '../utils/imageUrl.js';
+import { productosCatalogo } from '../data/Catalogo.js';
+import { datosTienda } from '../data/tiendas.js';
+import PanelFiltros from '../components/PanelFiltros.jsx';
+import TarjetaResultado from '../components/TarjetaResultado.jsx';
+
+const NOMBRES_TIPO = {
+  Cadena: 'Cadenas y supermercados',
+  Feria: 'Ferias y mercados',
+  Kiosco: 'Kioscos 24 hs',
+  Mayorista: 'Mayoristas',
+  Pyme: 'Pymes y comercios de barrio'
+};
+
+const TIPOS_MAP_REVERSO = {
+  'Cadenas y supermercados': 'Cadena',
+  'Ferias y mercados': 'Feria',
+  'Kioscos 24 hs': 'Kiosco',
+  'Mayoristas': 'Mayorista',
+  'Pymes y comercios de barrio': 'Pyme'
+};
+
+const LISTA_RUBROS_BASE = [
+  'Almacén',
+  'Deportes',
+  'Electrónica',
+  'Farmacia',
+  'Feria y mercado',
+  'Ferretería',
+  'Hogar y decoración',
+  'Kiosco',
+  'Librería',
+  'Mascotas',
+  'Mayorista',
+  'Panadería',
+  'Supermercado',
+  'Tienda general',
+  'Verdulería y frutería'
+];
 
 export default function Productos() {
   const [searchParams, setSearchParams] = useSearchParams();
+
   const urlCategoria = searchParams.get('categoria') || '';
-  const urlQ = searchParams.get('q') || '';
-  const urlOrden = searchParams.get('orden') || '';
+  const urlBuscar = searchParams.get('buscar') || searchParams.get('q') || '';
+  const urlGrupo = searchParams.get('grupo') || '';
+  const urlSub = searchParams.get('sub') || '';
 
-  const [q, setQ] = useState(urlQ);
-  const [categoria, setCategoria] = useState(urlCategoria);
-  const [orden, setOrden] = useState(urlOrden);
+  const [textoBusqueda, setTextoBusqueda] = useState(urlBuscar);
+  const [tiposSeleccionados, setTiposSeleccionados] = useState([]);
+  const [rubrosSeleccionados, setRubrosSeleccionados] = useState([]);
+  const [orden, setOrden] = useState('menor');
 
-  // Sincronizar estado cuando cambie la URL (por ejemplo desde el menú Categorías de la Navbar)
+  // Cargar productos del backend si están disponibles
+  const { data: dataBackend, cargando } = useFetch('/productos', []);
+  const prodsBackend = dataBackend?.productos || [];
+
+  // Fuente de datos combinada: si hay productos en la BD se integran, y se combinan con el catálogo base
+  const todosLosProductos = useMemo(() => {
+    if (prodsBackend.length > 0) {
+      // Normalizar productos de la BD para que tengan la estructura esperada
+      const adaptados = prodsBackend.map((p) => {
+        const tiendaInfo = datosTienda(p.comercio?.nombre_local || '');
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          precio: Number(p.precio_oferta || p.precio),
+          precio_anterior: p.precio_oferta ? Number(p.precio) : null,
+          en_oferta: Boolean(p.precio_oferta),
+          imagen_url: p.imagen_url,
+          distancia: p.distancia || '1,2 km',
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          comercio: p.comercio,
+          tienda: { nombre: p.comercio?.nombre_local || 'Comercio local' },
+          categorias: [{ nombre: p.categoria || 'General' }],
+          categoria: p.categoria || 'General',
+          rubro: tiendaInfo.rubro || p.categoria || 'Tienda general',
+          tipo: tiendaInfo.tipo || 'Pyme',
+          cuotas: p.cuotas
+        };
+      });
+      return [...adaptados, ...productosCatalogo];
+    }
+    return productosCatalogo;
+  }, [prodsBackend]);
+
+  // Sincronizar filtros cuando cambie la URL (?categoria=... o ?buscar=...)
   useEffect(() => {
-    setCategoria(searchParams.get('categoria') || '');
-    setQ(searchParams.get('q') || '');
-    setOrden(searchParams.get('orden') || '');
+    const cat = searchParams.get('categoria') || '';
+    const bus = searchParams.get('buscar') || searchParams.get('q') || '';
+    setTextoBusqueda(bus);
+
+    if (cat && cat !== 'Todas') {
+      // Si la categoría de la URL coincide con un rubro conocido, seleccionarlo
+      const coincidencia = LISTA_RUBROS_BASE.find(
+        (r) => r.toLowerCase() === cat.toLowerCase()
+      );
+      if (coincidencia) {
+        setRubrosSeleccionados([coincidencia]);
+      } else if (cat.toLowerCase() === 'otros') {
+        // En la referencia, /catalogo?categoria=Otros muestra Electrónica, Supermercado, Tienda general
+        setRubrosSeleccionados(['Electrónica', 'Supermercado', 'Tienda general']);
+        setTiposSeleccionados(['Pymes y comercios de barrio']);
+      }
+    }
   }, [searchParams]);
 
-  // Actualizar la URL al cambiar los filtros para que sea compartible y persistente
-  const actualizarFiltros = (nuevoQ, nuevaCat, nuevoOrd) => {
-    const params = new URLSearchParams();
-    if (nuevoQ) params.set('q', nuevoQ);
-    if (nuevaCat && nuevaCat !== 'Todas') params.set('categoria', nuevaCat);
-    if (nuevoOrd) params.set('orden', nuevoOrd);
-    setSearchParams(params);
+  // 1) Base de productos según búsqueda y categoría en URL
+  const base = useMemo(() => {
+    return todosLosProductos.filter((p) => {
+      const catNombre = p.categoria || p.categorias?.[0]?.nombre || '';
+      const coincideCat = !urlCategoria || urlCategoria === 'Todas' || catNombre.toLowerCase() === urlCategoria.toLowerCase();
+      const coincideGrupo = !urlGrupo || p.grupo === urlGrupo;
+      const coincideSub = !urlSub || p.subcategoria === urlSub;
+
+      const texto = `${p.nombre} ${p.marca || ''} ${p.tienda?.nombre || p.comercio?.nombre_local || ''}`.toLowerCase();
+      const coincideBusqueda = !textoBusqueda.trim() || texto.includes(textoBusqueda.trim().toLowerCase());
+
+      return coincideCat && coincideGrupo && coincideSub && coincideBusqueda;
+    });
+  }, [todosLosProductos, urlCategoria, urlGrupo, urlSub, textoBusqueda]);
+
+  // Contadores para Tipo de Comercio
+  const tiposOpciones = useMemo(() => {
+    const conteo = {
+      'Cadenas y supermercados': 0,
+      'Ferias y mercados': 0,
+      'Kioscos 24 hs': 0,
+      'Mayoristas': 0,
+      'Pymes y comercios de barrio': 0
+    };
+
+    base.forEach((p) => {
+      const tienda = datosTienda(p.tienda?.nombre || p.comercio?.nombre_local || '');
+      const tipoReal = p.tipo || tienda.tipo;
+      const label = NOMBRES_TIPO[tipoReal] || 'Pymes y comercios de barrio';
+      if (conteo[label] !== undefined) {
+        conteo[label] += 1;
+      }
+    });
+
+    return Object.entries(conteo).map(([etiqueta, cantidad]) => ({
+      nombre: etiqueta,
+      etiqueta,
+      cantidad
+    }));
+  }, [base]);
+
+  // Contadores para Rubro
+  const rubrosOpciones = useMemo(() => {
+    const conteo = {};
+    LISTA_RUBROS_BASE.forEach((r) => {
+      conteo[r] = 0;
+    });
+
+    base.forEach((p) => {
+      const tienda = datosTienda(p.tienda?.nombre || p.comercio?.nombre_local || '');
+      const rubro = p.rubro || tienda.rubro || p.categoria;
+      if (conteo[rubro] !== undefined) {
+        conteo[rubro] += 1;
+      } else if (rubro) {
+        conteo[rubro] = (conteo[rubro] || 0) + 1;
+      }
+    });
+
+    return Object.entries(conteo)
+      .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [base]);
+
+  // Filtrado final aplicando checkboxes de tipos y rubros
+  const filtrados = useMemo(() => {
+    return base.filter((p) => {
+      const tienda = datosTienda(p.tienda?.nombre || p.comercio?.nombre_local || '');
+      const tipoReal = p.tipo || tienda.tipo;
+      const tipoLabel = NOMBRES_TIPO[tipoReal] || 'Pymes y comercios de barrio';
+      const rubroReal = p.rubro || tienda.rubro || p.categoria;
+
+      const coincideTipo =
+        tiposSeleccionados.length === 0 || tiposSeleccionados.includes(tipoLabel);
+      const coincideRubro =
+        rubrosSeleccionados.length === 0 || rubrosSeleccionados.includes(rubroReal);
+
+      return coincideTipo && coincideRubro;
+    });
+  }, [base, tiposSeleccionados, rubrosSeleccionados]);
+
+  // Ordenamiento
+  const resultados = useMemo(() => {
+    const copia = [...filtrados];
+    if (orden === 'menor') {
+      copia.sort((a, b) => (a.precio_oferta || a.precio) - (b.precio_oferta || b.precio));
+    } else if (orden === 'mayor') {
+      copia.sort((a, b) => (b.precio_oferta || b.precio) - (a.precio_oferta || a.precio));
+    } else if (orden === 'nuevos') {
+      copia.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+    return copia;
+  }, [filtrados, orden]);
+
+  // Toggles de filtros
+  const alternarTipo = (tipo) => {
+    setTiposSeleccionados((prev) =>
+      prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
+    );
   };
 
-  const query = useMemo(() => {
-    const p = new URLSearchParams();
-    if (q) p.set('q', q);
-    if (categoria && categoria !== 'Todas') p.set('categoria', categoria);
-    if (orden) p.set('orden', orden);
-    const s = p.toString();
-    return `/productos${s ? `?${s}` : ''}`;
-  }, [q, categoria, orden]);
+  const alternarRubro = (rubro) => {
+    setRubrosSeleccionados((prev) =>
+      prev.includes(rubro) ? prev.filter((r) => r !== rubro) : [...prev, rubro]
+    );
+  };
 
-  const { data, cargando, error } = useFetch(query, [query]);
-  const productos = data?.productos || [];
+  const limpiarFiltros = () => {
+    setTiposSeleccionados([]);
+    setRubrosSeleccionados([]);
+    setTextoBusqueda('');
+    setSearchParams({});
+  };
+
+  const hayFiltrosActivos =
+    tiposSeleccionados.length > 0 ||
+    rubrosSeleccionados.length > 0 ||
+    Boolean(urlCategoria) ||
+    Boolean(textoBusqueda);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 text-white">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+      {/* Encabezado y barra de control de orden */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-borde">
         <div>
-          <h1 className="text-3xl font-extrabold">Catálogo de Productos</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Compará precios y descubrí ofertas en comercios barriales de Formosa Capital.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-blanco">
+            {urlCategoria && urlCategoria !== 'Todas' ? `Catálogo: ${urlCategoria}` : 'Catálogo General de Productos'}
+          </h1>
+          <p className="text-xs text-gris-azulado mt-1">
+            {resultados.length} {resultados.length === 1 ? 'producto encontrado' : 'productos encontrados'} en comercios de Formosa Capital.
           </p>
         </div>
 
-        {/* CONTROLES DE FILTRO */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              actualizarFiltros(e.target.value, categoria, orden);
-            }}
-            placeholder="Buscar por nombre..."
-            className="rounded-xl bg-[#111A2E] border border-white/15 px-3.5 py-2 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-[#FFB800]"
-          />
-
-          <select
-            value={categoria}
-            onChange={(e) => {
-              setCategoria(e.target.value);
-              actualizarFiltros(q, e.target.value, orden);
-            }}
-            className="rounded-xl bg-[#111A2E] border border-white/15 px-3 py-2 text-xs text-white focus:outline-none focus:border-[#FFB800] font-medium"
-          >
-            <option value="">Todas las categorías (27 A-Z)</option>
-            {CATEGORIAS_PRODUCTOS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-
+        {/* Selector de ordenamiento */}
+        <div className="flex items-center gap-3 self-end sm:self-auto">
+          <label className="text-xs text-gris-azulado font-semibold hidden sm:inline">Ordenar por:</label>
           <select
             value={orden}
-            onChange={(e) => {
-              setOrden(e.target.value);
-              actualizarFiltros(q, categoria, e.target.value);
-            }}
-            className="rounded-xl bg-[#111A2E] border border-white/15 px-3 py-2 text-xs text-white focus:outline-none focus:border-[#FFB800]"
+            onChange={(e) => setOrden(e.target.value)}
+            className="rounded-lg bg-gris-oscuro border border-borde px-3 py-1.5 text-xs text-blanco focus:outline-none focus:border-amarillo cursor-pointer"
           >
-            <option value="">Más recientes</option>
-            <option value="precio_asc">Precio: menor a mayor</option>
-            <option value="precio_desc">Precio: mayor a menor</option>
-            <option value="populares">Más solicitados y vistos</option>
-            <option value="nombre">Nombre A-Z</option>
+            <option value="menor">Menor precio</option>
+            <option value="mayor">Mayor precio</option>
+            <option value="nuevos">Más recientes</option>
           </select>
         </div>
       </div>
 
-      {categoria && (
-        <div className="mt-4 flex items-center gap-2 text-xs">
-          <span className="text-gray-400">Filtrando por categoría:</span>
-          <span className="bg-[#FFB800] text-black font-bold px-2.5 py-0.5 rounded-full">
-            {categoria}
-          </span>
-          <button
-            onClick={() => {
-              setCategoria('');
-              actualizarFiltros(q, '', orden);
-            }}
-            className="text-gray-400 hover:text-white underline ml-1"
-          >
-            Limpiar filtro
-          </button>
-        </div>
-      )}
+      {/* CUERPO PRINCIPAL: SIDEBAR DE FILTROS + LISTA DE PRODUCTOS */}
+      <div className="mt-8 flex flex-col md:flex-row items-start gap-8">
+        {/* COLUMNA IZQUIERDA: PANEL DE FILTROS */}
+        <PanelFiltros
+          tiposOpciones={tiposOpciones}
+          tiposSeleccionados={tiposSeleccionados}
+          alCambiarTipo={alternarTipo}
+          rubrosOpciones={rubrosOpciones}
+          rubrosSeleccionados={rubrosSeleccionados}
+          alCambiarRubro={alternarRubro}
+          alLimpiarFiltros={limpiarFiltros}
+          hayFiltrosActivos={hayFiltrosActivos}
+        />
 
-      {cargando && <p className="mt-10 text-center text-gray-400 text-sm">Cargando catálogo de Formosa…</p>}
-      {error && <p className="mt-10 text-center text-red-400 text-sm">{error}</p>}
+        {/* COLUMNA DERECHA: RESULTADOS HORIZONTALES */}
+        <div className="flex-1 w-full space-y-3">
+          {cargando && prodsBackend.length === 0 && (
+            <p className="text-center text-xs text-gris-azulado py-10">Cargando catálogo...</p>
+          )}
 
-      {/* GRILLA DE PRODUCTOS */}
-      {!cargando && (
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {productos.map((p) => (
-            <Link
-              to={`/productos/${p.id}`}
-              key={p.id}
-              className="group bg-[#111A2E] rounded-2xl overflow-hidden border border-white/10 hover:border-[#FFB800]/50 transition-all flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl shadow"
-            >
-              <div className="relative h-40 bg-black/30 flex items-center justify-center p-3 overflow-hidden">
-                {p.precio_oferta && (
-                  <span className="absolute top-2 left-2 z-10 bg-red-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
-                    Oferta
-                  </span>
-                )}
-                {p.imagen_url ? (
-                  <img
-                    src={resolverUrlImagen(p.imagen_url)}
-                    alt={p.nombre}
-                    className="h-full w-full object-contain group-hover:scale-105 transition-transform"
-                  />
-                ) : (
-                  <span className="text-xs text-gray-500 font-semibold uppercase">Sin foto</span>
-                )}
-              </div>
-
-              <div className="p-3.5 space-y-1">
-                <p className="text-[11px] font-semibold text-gray-400 truncate">
-                  {p.comercio?.nombre_local || 'Comercio local'}
-                </p>
-                <h3 className="text-xs font-bold text-white truncate group-hover:text-[#FFB800] transition-colors">
-                  {p.nombre}
-                </h3>
-                {p.categoria && (
-                  <span className="inline-block text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-gray-300">
-                    {p.categoria}
-                  </span>
-                )}
-                <div className="flex items-baseline gap-1.5 pt-1">
-                  <span className="text-sm font-black text-white">
-                    ${Number(p.precio_oferta || p.precio).toLocaleString('es-AR')}
-                  </span>
-                  {p.precio_oferta && (
-                    <span className="text-[10px] line-through text-red-400">
-                      ${Number(p.precio).toLocaleString('es-AR')}
-                    </span>
-                  )}
-                </div>
-                {p.cuotas && <p className="text-[10px] text-emerald-400 font-semibold">{p.cuotas}</p>}
-              </div>
-            </Link>
+          {resultados.map((p) => (
+            <TarjetaResultado key={p.id} producto={p} />
           ))}
-        </div>
-      )}
 
-      {!cargando && productos.length === 0 && (
-        <div className="mt-12 text-center py-12 rounded-2xl bg-[#111A2E]/50 border border-white/10 p-8">
-          <h3 className="text-base font-bold text-white">No se encontraron productos</h3>
-          <p className="text-xs text-gray-400 mt-1">Probá cambiando el término de búsqueda o la categoría seleccionada.</p>
+          {resultados.length === 0 && !cargando && (
+            <div className="rounded-xl border border-borde bg-gris-oscuro p-10 text-center">
+              <h3 className="text-base font-bold text-blanco">No se encontraron productos</h3>
+              <p className="text-xs text-gris-azulado mt-1">
+                No hay coincidencias con los tipos de comercio o rubros seleccionados.
+              </p>
+              <button
+                type="button"
+                onClick={limpiarFiltros}
+                className="mt-4 px-4 py-2 rounded-lg fondo-dorado text-negro text-xs font-bold shadow hover:brightness-110 cursor-pointer"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

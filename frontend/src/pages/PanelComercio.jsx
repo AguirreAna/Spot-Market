@@ -466,7 +466,7 @@ function ProductosTab({ productos, onActualizar }) {
             <thead className="bg-black/30 border-b border-borde text-gris-azulado font-bold uppercase tracking-wider">
               <tr>
                 <th className="px-5 py-3.5">Producto</th>
-                <th className="px-5 py-3.5">Categoría</th>
+                <th className="px-5 py-3.5">Rubro</th>
                 <th className="px-5 py-3.5">Precio Regular</th>
                 <th className="px-5 py-3.5">Última Modificación</th>
                 <th className="px-5 py-3.5">Cuotas</th>
@@ -594,7 +594,7 @@ function ProductosTab({ productos, onActualizar }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">Categoría (27 A-Z)</label>
+                  <label className="block text-[11px] font-bold uppercase text-gray-300 mb-1">Rubro</label>
                   <select
                     value={form.categoria}
                     onChange={(e) => setForm({ ...form, categoria: e.target.value })}
@@ -1095,6 +1095,8 @@ function PerfilTab({ comercio, onActualizar }) {
                   {t}
                 </option>
               ))}
+              <option value="Minorista">Minorista</option>
+              <option value="Mayorista">Mayorista</option>
             </select>
           </div>
           <div>
