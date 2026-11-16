@@ -89,7 +89,7 @@ export default function PanelComercio() {
   const totalVistas = productos.reduce((acc, p) => acc + (p.vistas || 0), 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 text-white">
+    <div className="max-w-7xl mx-auto px-4 py-8 text-blanco">
       {/* CABECERA DEL PANEL */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
         <div>

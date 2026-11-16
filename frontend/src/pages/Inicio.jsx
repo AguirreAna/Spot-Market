@@ -70,7 +70,7 @@ export default function Inicio() {
   const irArriba = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
-    <div className="min-h-screen bg-[#070C16] text-white">
+    <div className="min-h-screen bg-negro text-blanco transition-colors duration-200">
       {/* ── 1. HERO SECTION: Explorá el mapa de SpotMarket ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#0B111E] to-[#070C16] pt-10 pb-16 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">

@@ -15,7 +15,7 @@ export default function Navbar() {
   // Modo Oscuro / Claro
   const [tema, setTema] = useState(() => {
     try {
-      return localStorage.getItem('theme') || 'oscuro';
+      return localStorage.getItem('theme') || localStorage.getItem('tema') || 'oscuro';
     } catch {
       return 'oscuro';
     }
@@ -24,11 +24,14 @@ export default function Navbar() {
   useEffect(() => {
     if (tema === 'claro') {
       document.documentElement.classList.add('tema-claro');
+      document.documentElement.style.colorScheme = 'light';
     } else {
       document.documentElement.classList.remove('tema-claro');
+      document.documentElement.style.colorScheme = 'dark';
     }
     try {
       localStorage.setItem('theme', tema);
+      localStorage.setItem('tema', tema);
     } catch {}
   }, [tema]);
 

@@ -13,7 +13,7 @@ import MapaPage from './pages/MapaPage.jsx';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-brand-dark">
+    <div className="min-h-screen bg-negro text-blanco transition-colors duration-200">
       <Navbar />
       <main>
         <Routes>
