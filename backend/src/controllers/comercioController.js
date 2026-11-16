@@ -1,7 +1,7 @@
 // Controlador de comercios: listado, detalle, cercanos (Haversine), mi comercio y ranking de productos.
 import { db } from '../models/index.js';
 import { distanciaKm } from '../utils/haversine.js';
-import { guardarImagen } from '../utils/cloudinary.js';
+//import { guardarImagen } from '../utils/cloudinary.js';
 
 const { Comercio, FotoComercio, Producto, Oferta, Valoracion, Usuario } = db;
 
